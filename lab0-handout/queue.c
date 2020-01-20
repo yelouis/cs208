@@ -40,8 +40,10 @@ void q_free(queue_t *q)
 {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
+    char *sp = malloc(sizeof(char));
+    size_t bufsize = 0;
     while(q -> size != 0){
-      q_remove_head(q);
+      q_remove_head(q, sp, bufsize);
     }
     free(q);
 }
@@ -69,23 +71,23 @@ bool q_insert_head(queue_t *q, char *s)
     }
     /* Don't forget to allocate space for the string and copy it */
     /* What if either call to malloc returns NULL? */
-    int counter = 0;
-    while(*(s+counter) != 0x00){
-      counter += 1;
+    int counter1 = 0;
+    while(*(s+counter1) != 0x00){
+      counter1 += 1;
     }
-    counter += 1;
+    counter1 += 1;
 
-    newh -> value = malloc(sizeof(char)*counter);
+    newh -> value = malloc(sizeof(char)*counter1);
     if(newh -> value == NULL){
       printf("Memory allocation failed\n");
       return false;
     }
-    int counter = 0;
-    while(*(s+counter) != 0x00){
-      *((newh -> value) + counter) = *(s+counter);
-      counter += 1;
+    int counter2 = 0;
+    while(*(s+counter2) != 0x00){
+      *((newh -> value) + counter2) = *(s+counter2);
+      counter2 += 1;
     }
-    *((newh -> value) + counter) = 0x00;
+    *((newh -> value) + counter2) = 0x00;
 
     newh->next = q->head;
     q->head = newh;
@@ -129,12 +131,12 @@ bool q_insert_tail(queue_t *q, char *s)
       printf("Memory allocation failed\n");
       return false;
     }
-    int counter = 0;
-    while(*(s+counter) != 0x00){
-      *((newh -> value) + counter) = *(s+counter);
-      counter += 1;
+    int counter2 = 0;
+    while(*(s+counter2) != 0x00){
+      *((newh -> value) + counter2) = *(s+counter2);
+      counter2 += 1;
     }
-    *((newh -> value) + counter) = 0x00;
+    *((newh -> value) + counter2) = 0x00;
 
     newh->next = NULL;
     q->tail->next = newh;
