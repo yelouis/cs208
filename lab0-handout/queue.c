@@ -26,7 +26,7 @@ queue_t *q_new()
     queue_t *q =  malloc(sizeof(queue_t));
     /* What if malloc returned NULL? */
     if(q == NULL){
-      printf("Memory allocation failed\n");
+      //printf("Memory allocation failed\n");
       return NULL;
     }
     q->head = NULL;
@@ -58,7 +58,7 @@ void q_free(queue_t *q)
 bool q_insert_head(queue_t *q, char *s)
 {
     if(q == NULL){
-      printf("q is NULL\n");
+      //printf("q is NULL\n");
       return false;
     }
 
@@ -66,7 +66,7 @@ bool q_insert_head(queue_t *q, char *s)
     /* What should you do if the q is NULL? */
     newh = malloc(sizeof(list_ele_t));
     if(newh == NULL){
-      printf("Memory allocation failed\n");
+      //printf("Memory allocation failed\n");
       return false;
     }
     /* Don't forget to allocate space for the string and copy it */
@@ -79,7 +79,7 @@ bool q_insert_head(queue_t *q, char *s)
 
     newh -> value = malloc(sizeof(char)*counter1);
     if(newh -> value == NULL){
-      printf("Memory allocation failed\n");
+      //printf("Memory allocation failed\n");
       return false;
     }
     int counter2 = 0;
@@ -110,7 +110,7 @@ bool q_insert_tail(queue_t *q, char *s)
     /* You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
     if(q == NULL){
-      printf("q is NULL\n");
+      //printf("q is NULL\n");
       return false;
     }
 
@@ -122,7 +122,7 @@ bool q_insert_tail(queue_t *q, char *s)
     /* What should you do if the q is NULL? */
     newh = malloc(sizeof(list_ele_t));
     if(newh == NULL){
-      printf("Memory allocation failed\n");
+      //printf("Memory allocation failed\n");
       return false;
     }
     /* Don't forget to allocate space for the string and copy it */
@@ -135,7 +135,7 @@ bool q_insert_tail(queue_t *q, char *s)
 
     newh -> value = malloc(sizeof(char)*counter);
     if(newh -> value == NULL){
-      printf("Memory allocation failed\n");
+      //printf("Memory allocation failed\n");
       return false;
     }
     int counter2 = 0;
@@ -164,7 +164,7 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* You need to fix up this code. */
     if(q == NULL || q->size == 0){
-      printf("q is NULL or empty\n");
+      //printf("q is NULL or empty\n");
       return false;
     }
 
@@ -196,7 +196,7 @@ int q_size(queue_t *q)
     /* You need to write the code for this function */
     /* Remember: It should operate in O(1) time */
     if(q == NULL){
-      printf("q is NULL\n");
+      //printf("q is NULL\n");
       return 0;
     }else{
       return (q -> size);
