@@ -40,13 +40,12 @@ void q_free(queue_t *q)
 {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
-    char *sp = malloc(sizeof(char));
+    char *sp = NULL;
     size_t bufsize = 0;
     while(q -> size != 0){
       q_remove_head(q, sp, bufsize);
     }
     free(q);
-    free(sp);
 }
 
 /*
@@ -174,12 +173,14 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     q->size -= 1;
 
     //Copied to sp
-    int counter = 0;
-    while(*((deletingHead -> value)+counter) != 0x00 && counter < bufsize-1){
-      *(sp+counter) = *((deletingHead -> value)+counter);
-      counter += 1;
+    if(sp != NULL){
+      int counter = 0;
+      while(*((deletingHead -> value)+counter) != 0x00 && counter < bufsize-1){
+        *(sp+counter) = *((deletingHead -> value)+counter);
+        counter += 1;
+      }
+      *(sp+counter) = 0x00;
     }
-    *(sp+counter) = 0x00;
     free(deletingHead);
 
     return true;
