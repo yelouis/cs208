@@ -177,13 +177,15 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
     //Copied to sp
     if(sp != NULL){
       int counter = 0;
-      while(*((deletingHead -> value)+counter) != 0x00 && counter < bufsize-1){
+      while(*((deletingHead -> value)+counter) != 0x00 && counter < (int) bufsize-1){
         *(sp+counter) = *((deletingHead -> value)+counter);
         counter += 1;
       }
       *(sp+counter) = 0x00;
     }
-    free(deletingHead->value);
+    if(deletingHead -> value != NULL){
+      free(deletingHead->value);
+    }
     free(deletingHead);
 
     return true;
