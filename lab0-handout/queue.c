@@ -92,6 +92,9 @@ bool q_insert_head(queue_t *q, char *s)
 
     newh->next = q->head;
     q->head = newh;
+    if(q->size == 0){
+        q -> tail = newh;
+    }
     q->size += 1;
     return true;
 }
@@ -110,6 +113,10 @@ bool q_insert_tail(queue_t *q, char *s)
     if(q == NULL){
       printf("q is NULL\n");
       return false;
+    }
+
+    if(q -> size == 0){
+      return q_insert_head(q,s);
     }
 
     list_ele_t *newh;
