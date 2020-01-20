@@ -218,11 +218,10 @@ void q_reverse(queue_t *q)
 
   list_ele_t *originalTail = q -> tail;
   list_ele_t *movingElement = q -> head;
-  while(&movingElement != &originalTail){
-    q -> tail = movingElement;
+  while(movingElement != originalTail){
     q -> head = movingElement -> next;
+    movingElement -> next = originalTail -> next;
     originalTail -> next = movingElement;
-    movingElement -> next = NULL;
     movingElement = q -> head;
   }
     /* You need to write the code for this function */
