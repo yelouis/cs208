@@ -81,6 +81,7 @@ bool q_insert_head(queue_t *q, char *s)
 
     newh -> value = malloc(sizeof(char)*counter1);
     if(newh -> value == NULL){
+      free(newh);
       printf("Memory allocation failed\n");
       return false;
     }
@@ -137,6 +138,7 @@ bool q_insert_tail(queue_t *q, char *s)
 
     newh -> value = malloc(sizeof(char)*counter);
     if(newh -> value == NULL){
+      free(newh);
       printf("Memory allocation failed\n");
       return false;
     }
@@ -183,6 +185,7 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
       }
       *(sp+counter) = 0x00;
     }
+
     if(deletingHead -> value != NULL){
       free(deletingHead->value);
     }
