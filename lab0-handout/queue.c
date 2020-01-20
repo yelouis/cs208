@@ -1,4 +1,4 @@
-/* 
+/*
  * Starter file for CS 208 Lab 0: Welcome to C
  * Adapted from lab developed at CMU by R. E. Bryant, 2017-2018
  */
@@ -25,7 +25,13 @@ queue_t *q_new()
 {
     queue_t *q =  malloc(sizeof(queue_t));
     /* What if malloc returned NULL? */
+    if(q == NULL){
+      printf("Memory allocation failed\n");
+      return NULL;
+    }
     q->head = NULL;
+    q->tail = NULL;
+    q->size = 0;
     return q;
 }
 
@@ -34,7 +40,12 @@ void q_free(queue_t *q)
 {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
-    free(q);
+    queue_t *current = q
+    while(q->next != NULL){
+      q = q -> next;
+      free(current);
+      current = q
+    }
 }
 
 /*
@@ -46,13 +57,41 @@ void q_free(queue_t *q)
  */
 bool q_insert_head(queue_t *q, char *s)
 {
+    if(q == NULL){
+      printf("q is NULL\n");
+      return false;
+    }
+
     list_ele_t *newh;
     /* What should you do if the q is NULL? */
     newh = malloc(sizeof(list_ele_t));
+    if(newh == NULL){
+      printf("Memory allocation failed\n");
+      return false;
+    }
     /* Don't forget to allocate space for the string and copy it */
     /* What if either call to malloc returns NULL? */
+    int counter = 0;
+    while(*(s+counter) != 0x00){
+      counter += 1;
+    }
+    counter += 1;
+
+    newh -> value = malloc(sizeof(char)*counter);
+    if(newh -> value == NULL){
+      printf("Memory allocation failed\n");
+      return false;
+    }
+    int counter = 0;
+    while(*(s+counter) != 0x00){
+      *((newh -> value) + counter) = *(s+counter);
+      counter += 1;
+    }
+    *((newh -> value) + counter) = 0x00;
+
     newh->next = q->head;
     q->head = newh;
+    q->size += 1;
     return true;
 }
 
@@ -68,7 +107,43 @@ bool q_insert_tail(queue_t *q, char *s)
 {
     /* You need to write the complete code for this function */
     /* Remember: It should operate in O(1) time */
-    return false;
+    if(q == NULL){
+      printf("q is NULL\n");
+      return false;
+    }
+
+    list_ele_t *newh;
+    /* What should you do if the q is NULL? */
+    newh = malloc(sizeof(list_ele_t));
+    if(newh == NULL){
+      printf("Memory allocation failed\n");
+      return false;
+    }
+    /* Don't forget to allocate space for the string and copy it */
+    /* What if either call to malloc returns NULL? */
+    int counter = 0;
+    while(*(s+counter) != 0x00){
+      counter += 1;
+    }
+    counter += 1;
+
+    newh -> value = malloc(sizeof(char)*counter);
+    if(newh -> value == NULL){
+      printf("Memory allocation failed\n");
+      return false;
+    }
+    int counter = 0;
+    while(*(s+counter) != 0x00){
+      *((newh -> value) + counter) = *(s+counter);
+      counter += 1;
+    }
+    *((newh -> value) + counter) = 0x00;
+
+    newh->next = NULL;
+    q->tail->next = newh;
+    q->tail = newh;
+    q->size += 1;
+    return true;
 }
 
 /*
@@ -82,6 +157,9 @@ bool q_insert_tail(queue_t *q, char *s)
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* You need to fix up this code. */
+    list_ele_t *deletingHead = q->head;
+    
+
     q->head = q->head->next;
     return true;
 }
@@ -94,7 +172,12 @@ int q_size(queue_t *q)
 {
     /* You need to write the code for this function */
     /* Remember: It should operate in O(1) time */
-    return 0;
+    if(q == NULL){
+      printf("q is NULL\n");
+      return 0;
+    }else{
+      return (q -> size);
+    }
 }
 
 /*
@@ -106,6 +189,11 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
+  queue_t *current = q;
+  queue_t *newQueue = q_new();
+  while(current -> head != NULL){
+    q_insert_head(newQueue, current->head);
+    current = current -> next;
+  }
     /* You need to write the code for this function */
 }
-

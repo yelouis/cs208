@@ -1,4 +1,4 @@
-/* 
+/*
  * Starter file for CS 208 Lab 0: Welcome to C
  * Adapted from lab developed at CMU by R. E. Bryant, 2017-2018
  */
@@ -29,6 +29,9 @@ typedef struct {
       You will need to add more fields to this structure
       to efficiently implement q_size and q_insert_tail
     */
+    list_ele_t *list;
+    list_ele_t *tail;
+    int size;
 } queue_t;
 
 /************** Operations on queue ************************/
