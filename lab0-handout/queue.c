@@ -49,6 +49,8 @@ void q_free(queue_t *q)
     while(q -> size != 0){
       q_remove_head(q, sp, bufsize);
     }
+    free(q->head);
+    free(q->tail);
     free(q);
 }
 
@@ -186,7 +188,6 @@ bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
       *(sp+counter) = 0x00;
     }
     free(deletingHead->value);
-    free(deletingHead->next);
     free(deletingHead);
 
     return true;
