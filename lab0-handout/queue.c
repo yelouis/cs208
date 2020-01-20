@@ -40,12 +40,10 @@ void q_free(queue_t *q)
 {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
-    queue_t *current = q
-    while(q->next != NULL){
-      q = q -> next;
-      free(current);
-      current = q
+    while(q -> size != 0){
+      q_remove_head(q);
     }
+    free(q);
 }
 
 /*
@@ -94,7 +92,6 @@ bool q_insert_head(queue_t *q, char *s)
     q->size += 1;
     return true;
 }
-
 
 /*
   Attempt to insert element at tail of queue.
@@ -157,10 +154,24 @@ bool q_insert_tail(queue_t *q, char *s)
 bool q_remove_head(queue_t *q, char *sp, size_t bufsize)
 {
     /* You need to fix up this code. */
-    list_ele_t *deletingHead = q->head;
-    
+    if(q == NULL || q->size == 0){
+      printf("q is NULL or empty\n");
+      return false;
+    }
 
+    list_ele_t *deletingHead = q->head;
     q->head = q->head->next;
+    q->size -= 1;
+
+    //Copied to sp
+    int counter = 0;
+    while(*((deletingHead -> value)+counter) != 0x00 && counter < bufsize-1){
+      *(sp+counter) = *((deletingHead -> value)+counter);
+      counter += 1;
+    }
+    *(sp+counter) = 0x00;
+    free(deletingHead);
+
     return true;
 }
 
@@ -189,11 +200,18 @@ int q_size(queue_t *q)
  */
 void q_reverse(queue_t *q)
 {
-  queue_t *current = q;
-  queue_t *newQueue = q_new();
-  while(current -> head != NULL){
-    q_insert_head(newQueue, current->head);
-    current = current -> next;
+  if(q == NULL || q->size == 0){
+    return;
+  }
+
+  list_ele_t *originalTail = q -> tail;
+  list_ele_t *movingElement = q -> head;
+  while(&movingElement != &originalTail){
+    q -> tail = movingElement;
+    q -> head = movingElement -> next;
+    originalTail -> next = movingElement;
+    movingElement -> next = NULL;
+    movingElement = q -> head;
   }
     /* You need to write the code for this function */
 }
