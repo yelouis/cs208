@@ -46,6 +46,7 @@ void q_free(queue_t *q)
       q_remove_head(q, sp, bufsize);
     }
     free(q);
+    free(sp);
 }
 
 /*
