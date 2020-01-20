@@ -40,6 +40,10 @@ void q_free(queue_t *q)
 {
     /* How about freeing the list elements and the strings? */
     /* Free queue structure */
+    if(q == NULL){
+      return;
+    }
+
     char *sp = NULL;
     size_t bufsize = 0;
     while(q -> size != 0){
