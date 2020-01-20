@@ -49,8 +49,7 @@ void q_free(queue_t *q)
     while(q -> size != 0){
       q_remove_head(q, sp, bufsize);
     }
-    free(q->head);
-    free(q->tail);
+    free(sp);
     free(q);
 }
 
