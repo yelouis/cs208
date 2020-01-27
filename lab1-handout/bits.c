@@ -181,9 +181,9 @@ NOTES:
 int bitXor(int x, int y) {
   int a = 0;
   int b = 0;
-  a = (x & y)
-  b = (~x&~y)
-  int z = (~a & ~b)
+  a = (x & y);
+  b = (~x&~y);
+  int z = (~a & ~b);
   return z;
 }
 /*
