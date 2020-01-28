@@ -212,6 +212,8 @@ int isTmax(int x) {
  */
 int allOddBits(int x) {
   int deleteEvens = x & 0xAAAAAAAA;
+  //Gets rid of all the even bits and makes those 0. The problem is whether I can use
+  // 0xAAAAAAAA
   return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
 }
 /*
@@ -223,7 +225,8 @@ int allOddBits(int x) {
  *  Rating: 3
  */
 int sign(int x) {
-    return 2;
+  int signCheck = x & (1 << 31);
+    return !(~(~$0 & ~signCheck) & ~($0 & signCheck));
 }
 //3
 /*
