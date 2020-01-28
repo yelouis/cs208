@@ -213,8 +213,6 @@ int isTmax(int x) {
 int allOddBits(int x) {
   int deleteEvens = x & 0xAAAAAAAA;
   return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
-
-  return 2;
 }
 /*
  * sign - return 1 if positive, 0 if zero, and -1 if negative
