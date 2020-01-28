@@ -271,7 +271,7 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 3
  */
 int logicalNeg(int x) {
-  return 2;
+  return ((x | (~x + 1)) >> 31) + 1;
 }
 //4
 /*
@@ -298,7 +298,17 @@ int greatestBitPos(int x) {
  *   Rating: 3
  */
 unsigned floatScale2(unsigned uf) {
-  return 2;
+  //0
+  if(uf == 0 || uf == (1 << 31))
+    return uf;
+  //Special value
+  if(((uf >> 23) & 0xff) == 0xff)
+    return uf;
+  //Denormalized
+  if(((uf >> 23) & 0xff) == 0x00)
+    return ((uf & 0x007FFFFF) << 1) | ((1 << 31) & uf);
+  // Normalized
+  return uf + (1<<23);
 }
 /*
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -313,7 +323,36 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 3
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+  int sign = (uf >> 31) & 0x1;
+  int e = (uf >> 23) & 0xFF;
+  int frac = uf & 0x7FFFFF;
+
+  int exponent = e - 127;
+  // add the implicit one
+  int newFrac = 0x1000000 + frac;
+  int shifted;
+  // if e equals zero -> denorm -> will be rounded to 0 while casting to integer
+  // if exponent is negative -> will be rounded to 0 while casting to integer
+  if(exponent < 0 || e == 0) {
+    return 0;
+  }
+  // if exponent is greater than or equal to 31 -> overflow
+  // if e == 0xFF -> special value
+  if(exponent >= 31 || e == 0xFF) {
+    return 0x80000000;
+  }
+  // if exponent is greater than 24, shift to left by (exponent - 24)
+  if(exponent > 24) {
+    shifted = newFrac << (exponent - 24);
+  }
+  // if exponent is less than or equal to 24, shift to right by (24 - exponent)
+  else if(exponent <= 24) {
+    shifted = newFrac >> (24 - exponent);
+  }
+  // negate if signed
+  if(sign)
+    shifted = -shifted;
+  return shifted;
 }
 /*
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -329,5 +368,24 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 3
  */
 unsigned floatPower2(int x) {
-    return 2;
+  if(x < -150) {
+    return 0;
+  }
+  if(x >= -150 && x <= -127) {
+    //denorm
+    int shiftAmount = (-x - 127);
+    int frac = 1 << shiftAmount;
+    return frac;
+  }
+  if(x >= -126 && x <= 127) {
+    //norm
+    int e = (x + 127) << 23;
+    return e;
+  }
+  if(x >= 128) {
+    //inf
+    int e = 0xFF << 23;
+    return e;
+  }
+  return 0;
 }
