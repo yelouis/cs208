@@ -226,7 +226,7 @@ int allOddBits(int x) {
  */
 int sign(int x) {
   int signCheck = x & (1 << 31);
-    return !(~(~$0 & ~signCheck) & ~($0 & signCheck));
+    return !(~(~0x0 & ~signCheck) & ~(0x0 & signCheck));
 }
 //3
 /*
