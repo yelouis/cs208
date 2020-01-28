@@ -225,8 +225,8 @@ int allOddBits(int x) {
  *  Rating: 3
  */
 int sign(int x) {
-  int signCheck = x & (1 << 31);
-    return ~(~0x0 & ~signCheck) & ~(0x0 & signCheck);
+  int signCheck = 1 + (x>>31) – (-x>>31);
+    return signCheck;
 }
 //3
 /*
