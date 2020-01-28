@@ -255,7 +255,12 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int sign_x = (x >> 31) & 1;
+  int sign_y = (y >> 31) & 1;
+  int y_x = y + (~x + 1);
+  int sign_yx = (y_x >> 31) & 1;
+  int result = (sign_x & !sign_y) | ((!(sign_x^sign_y)) & !sign_yx);
+  return result;
 }
 /*
  * logicalNeg - implement the ! operator, using all of
