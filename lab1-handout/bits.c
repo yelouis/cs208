@@ -211,6 +211,9 @@ int isTmax(int x) {
  *   Rating: 3
  */
 int allOddBits(int x) {
+  int deleteEvens = x & 0xAAAAAAAA;
+  return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
+
   return 2;
 }
 /*
