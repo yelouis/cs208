@@ -238,7 +238,14 @@ int sign(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  int y_x = x + (~0x30 + 1);
+  int sign_yx = (y_x >> 31) & 1;
+  int result1 = !sign_yx;
+  // Compare x with 0x39 (x <= 0x39)
+  int y_x_2 = 0x39 + (~x + 1);
+  int sign_yx_2 = (y_x_2 >> 31) & 1;
+  int result2 = !sign_yx_2;
+  return result1 & result2;
 }
 /*
  * isLessOrEqual - if x <= y  then return 1, else return 0
