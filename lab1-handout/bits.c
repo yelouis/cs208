@@ -183,9 +183,7 @@ int bitXor(int x, int y) {
   int b = 0;
   a = (x & y);
   b = (~x&~y);
-  int z = 0;
-  z = (~a & ~b);
-  return z;
+  return (~a & ~b);;
 }
 /*
  * isTmax - returns 1 if x is the maximum, two's complement number,
