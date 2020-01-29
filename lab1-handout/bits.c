@@ -216,7 +216,7 @@ int allOddBits(int x) {
   // int deleteEvens = x & 0xAAAAAAAA;
   //Gets rid of all the even bits and makes those 0. The problem is whether I can use
   // 0xAAAAAAAA
-  return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
+  //return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
 }
 /*
  * sign - return 1 if positive, 0 if zero, and -1 if negative
