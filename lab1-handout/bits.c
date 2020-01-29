@@ -211,7 +211,9 @@ int isTmax(int x) {
  *   Rating: 3
  */
 int allOddBits(int x) {
-  int deleteEvens = x & 0xAAAAAAAA;
+  int aBit = (((((0xAA << 8) | 0xAA) << 8) | 0xAA) << 8) | 0xAA;
+  return aBit;
+  // int deleteEvens = x & 0xAAAAAAAA;
   //Gets rid of all the even bits and makes those 0. The problem is whether I can use
   // 0xAAAAAAAA
   return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
