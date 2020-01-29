@@ -212,7 +212,6 @@ int isTmax(int x) {
 int allOddBits(int x) {
   int aBit = (((((0xAA << 8) | 0xAA) << 8) | 0xAA) << 8) | 0xAA;
   int deleteEvens = x & aBit;
-  //Gets rid of all the even bits and makes those 0. The problem is whether I can use
   return !(aBit^deleteEvens);
 }
 /*
@@ -254,11 +253,19 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  int sign_x = (x >> 31) & 1;
-  int sign_y = (y >> 31) & 1;
+  int signOfx = (x >> 31) & 1;
+  int signOfy = (y >> 31) & 1;
+  // Return 1 if x is negative and y is positive
+  // Return 1 if y - x is positive
+    // If both y and x are negative and y - x is positive then x is a greater negative number
+    // If both y and x are negative and y -x is positive then y is a greater positive number
+
   int y_x = y + (~x + 1);
   int sign_yx = (y_x >> 31) & 1;
-  int result = (sign_x & !sign_y) | ((!(sign_x^sign_y)) & !sign_yx);
+  // Checks the sign of subtracting the two. If sign_yx is 1 then y - x is negative.
+  int result = (signOfx & !signOfy) | ((!(signOfx^signOfy)) & !sign_yx);
+  // !(signOfx^signOfy) checks if they are the same sign
+  // signOfx & !signOfy checks if they are not the same sign
   return result;
 }
 /*
