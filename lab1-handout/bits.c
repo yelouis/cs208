@@ -183,7 +183,8 @@ int bitXor(int x, int y) {
   int b = 0;
   a = (x & y);
   b = (~x&~y);
-  int z = (~a & ~b);
+  int z = 0;
+  z = (~a & ~b);
   return z;
 }
 /*
