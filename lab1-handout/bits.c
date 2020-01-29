@@ -212,11 +212,10 @@ int isTmax(int x) {
  */
 int allOddBits(int x) {
   int aBit = (((((0xAA << 8) | 0xAA) << 8) | 0xAA) << 8) | 0xAA;
-  return aBit;
-  // int deleteEvens = x & 0xAAAAAAAA;
+  int deleteEvens = x & aBit;
   //Gets rid of all the even bits and makes those 0. The problem is whether I can use
   // 0xAAAAAAAA
-  //return !(~(~0xAAAAAAAA & ~deleteEvens) & ~(0xAAAAAAAA & deleteEvens));
+  return !(~(~aBit & ~deleteEvens) & ~(aBit & deleteEvens));
 }
 /*
  * sign - return 1 if positive, 0 if zero, and -1 if negative
