@@ -236,14 +236,17 @@ int sign(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  int y_x = x + (~0x30 + 1);
-  int sign_yx = (y_x >> 31) & 1;
-  int result1 = !sign_yx;
-  // Compare x with 0x39 (x <= 0x39)
-  int y_x_2 = 0x39 + (~x + 1);
-  int sign_yx_2 = (y_x_2 >> 31) & 1;
-  int result2 = !sign_yx_2;
-  return result1 & result2;
+  int y = x + (~0x30 + 1);
+  int sign_y = (y >> 31) & 1;
+  int greater = !sign_y;
+  // This checks if x is greater than 0x30
+
+  int z = 0x39 + (~x + 1);
+  int sign_z = (z >> 31) & 1;
+  int less = !sign_z;
+  // This checks if x is less than 0x39
+  // Same logic for these checks as the isLessOrEqual function.
+  return greater & less;
 }
 /*
  * isLessOrEqual - if x <= y  then return 1, else return 0
@@ -289,12 +292,27 @@ int logicalNeg(int x) {
  *   Rating: 4
  */
 int greatestBitPos(int x) {
+  // We want to make all the adjacent bits equal to 1
+  // Ex: Something like 0b 0010 0000 0000 0000 0000 0000 0000 0000
+  // 0b 0011 0000 0000 0000 0000 0000 0000 0000
+  // 0b 0011 1100 0000 0000 0000 0000 0000 0000
+  // 0b 0011 1111 1100 0000 0000 0000 0000 0000
+  // 0b 0011 1111 1111 1111 0000 0000 0000 0000
+  // 0b 0011 1111 1111 1111 1111 1111 1111 1111
+
+  // Invert
+  // 0b 1100 0000 0000 0000 0000 0000 0000 0000
+  // Right shift by 1
+  // 0b 1110 0000 0000 0000 0000 0000 0000 0000
+  // & with x makes the inverted right shift x leave the GSB.
+
   x = x | x >> 1;
   x = x | x >> 2;
   x = x | x >> 4;
   x = x | x >> 8;
   x = x | x >> 16;
   x = x & ((~x >> 1) ^ (1 << 31));
+  // 1 << 31 xor takes care or negative cases.
   return x;
 }
 //float
@@ -310,15 +328,18 @@ int greatestBitPos(int x) {
  *   Rating: 3
  */
 unsigned floatScale2(unsigned uf) {
+  // I wanted 0b0000000 01111111 11111111 11111111 = 0x007FFFFF
+  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF)
   //0
   if(uf == 0 || uf == (1 << 31))
     return uf;
+
   //Special value
   if(((uf >> 23) & 0xff) == 0xff)
+  // This is when the exponent is just 0 so when it is denormalized.
     return uf;
-  //Denormalized
   if(((uf >> 23) & 0xff) == 0x00)
-    return ((uf & 0x007FFFFF) << 1) | ((1 << 31) & uf);
+    return ((uf & fracField) << 1) | ((1 << 31) & uf);
   // Normalized
   return uf + (1<<23);
 }
