@@ -329,7 +329,7 @@ int greatestBitPos(int x) {
  */
 unsigned floatScale2(unsigned uf) {
   // I wanted 0b0000000 01111111 11111111 11111111 = 0x007FFFFF
-  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF)
+  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF);
   //0
   if(uf == 0 || uf == (1 << 31))
     return uf;
