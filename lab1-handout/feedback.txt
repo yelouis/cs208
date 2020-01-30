@@ -1,0 +1,5 @@
+Spent almost 3 entire work days. So about 12 hours working on this lab.
+
+I would rate this homework as too hard because it was hard coming up with a strategy to solving these problems. I relied heavily on trial and error. Edges cases felt really hard to nail down with advice from another classmate who already figured it out.
+
+I learned to be a bit more comfortable using bitwise operators but considering the amount of time I spent to practice these skills, I would rate the educational value a 3 because I really felt like I was spending a lot of time on this.
