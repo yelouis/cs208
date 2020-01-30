@@ -356,9 +356,10 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 3
  */
 int floatFloat2Int(unsigned uf) {
+  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF);
   int sign = (uf >> 31) & 0x1;
   int e = (uf >> 23) & 0xFF;
-  int frac = uf & 0x7FFFFF;
+  int frac = uf & fracField;
 
   int exponent = e - 127;
   // add the implicit one
