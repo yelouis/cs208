@@ -356,37 +356,20 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 3
  */
 int floatFloat2Int(unsigned uf) {
-  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF);
-  int sign = (uf >> 31) & 0x1;
-  int e = (uf >> 23) & 0xFF;
-  int frac = uf & fracField;
-
-  int exponent = e - 127;
-  // add the implicit one
-  int newFrac = 0x1000000 + frac;
-  int shifted;
-  // if e equals zero -> denorm -> will be rounded to 0 while casting to integer
-  // if exponent is negative -> will be rounded to 0 while casting to integer
-  if(exponent < 0 || e == 0) {
-    return 0;
-  }
-  // if exponent is greater than or equal to 31 -> overflow
-  // if e == 0xFF -> special value
-  if(exponent >= 31 || e == 0xFF) {
-    return 0x80000000;
-  }
-  // if exponent is greater than 24, shift to left by (exponent - 24)
-  if(exponent > 24) {
-    shifted = newFrac << (exponent - 24);
-  }
-  // if exponent is less than or equal to 24, shift to right by (24 - exponent)
-  else if(exponent <= 24) {
-    shifted = newFrac >> (24 - exponent);
-  }
-  // negate if signed
-  if(sign)
-    shifted = -shifted;
-  return shifted;
+  unsigned INF = 1<<31;
+  int e = (uf>>23) & 0xff;
+  int s = (uf>>31) & 1;
+  if (uf == 0) return 0;
+  uf <<= 8;
+  uf |= 1<<31;
+  uf >>= 8;
+  e -= 127;
+  if ((uf & 0x7f80000) == 0x7f80000 || e >= 32) return INF;
+  if (e < 0) return 0;
+  if (e <= 22) uf >>= 23-e;
+  else uf <<= e-23;
+  if (s) uf = ~uf + 1;
+  return uf;
 }
 /*
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
