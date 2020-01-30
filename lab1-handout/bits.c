@@ -356,20 +356,29 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 3
  */
 int floatFloat2Int(unsigned uf) {
-  unsigned INF = 1<<31;
-  int e = (uf>>23) & 0xff;
-  int s = (uf>>31) & 1;
-  if (uf == 0) return 0;
-  uf <<= 8;
-  uf |= 1<<31;
-  uf >>= 8;
-  e -= 127;
-  if ((uf & 0x7f80000) == 0x7f80000 || e >= 32) return INF;
-  if (e < 0) return 0;
-  if (e <= 22) uf >>= 23-e;
-  else uf <<= e-23;
-  if (s) uf = ~uf + 1;
-  return uf;
+  int fracField = ((((0x7F << 8) | 0xFF) << 8) | 0xFF);
+  int sign = (uf >> 31) & 0x1;
+  int exp = (uf >> 23) & 0xFF;
+  int frac = uf & fracField;
+
+  int exponent = exp - 127; // Bias
+  int newFrac = 0x1000000 + frac;
+  int shift;
+  if(exponent < 0 || exp == 0) {
+    return 0;
+  }
+  if(exponent >= 31 || exp == 0xFF) {
+    return 0x80000000;
+  }
+  if(exponent > 24) {
+    shift = newFrac << (exponent - 24);
+  }
+  else if(exponent <= 24) {
+    shift = newFrac >> (24 - exponent);
+  }
+  if(sign)
+    shift = -shift;
+  return shift;
 }
 /*
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
@@ -389,18 +398,15 @@ unsigned floatPower2(int x) {
     return 0;
   }
   if(x >= -150 && x <= -127) {
-    //denorm
     int shiftAmount = (-x - 127);
     int frac = 1 << shiftAmount;
     return frac;
   }
   if(x >= -126 && x <= 127) {
-    //norm
     int e = (x + 127) << 23;
     return e;
   }
   if(x >= 128) {
-    //inf
     int e = 0xFF << 23;
     return e;
   }
