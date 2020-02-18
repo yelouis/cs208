@@ -1,5 +1,0 @@
-Spent probably 6 hours on this lab.
-
-This homework was definitely more on the challenging side because the material covered in class just didn't feel like enough to work on this lab confidently.
-
-I would say that the educational value of this lab was around a 3 with the first few phases and decreased in the later phases. I don't think I understand code injections to do it on my own (if I ever have the opportunity to do so). I still feel like I got through this lab with targeted guessing rather than fully understanding the material.
