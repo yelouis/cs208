@@ -49,17 +49,17 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    quit()
+    quit();
 
     /* Initialize cache */
-    initCache();
+    //initCache();
 
-    replayTrace(trace_file);
+    //replayTrace(trace_file);
 
     /* Free allocated memory */
-    freeCache();
+    //freeCache();
 
     /* Output the hit and miss statistics for the autograder */
-    printSummary(hit_count, miss_count, eviction_count);
+    //printSummary(hit_count, miss_count, eviction_count);
     return 0;
 }
