@@ -69,7 +69,7 @@ int main(int argc, char* argv[])
         exit(1);
     }
 
-    quit();
+    exit(2);
 
     /* Initialize cache */
     //initCache();
