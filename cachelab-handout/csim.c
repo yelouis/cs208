@@ -31,6 +31,201 @@ int hit_count = 0;
 int eviction_count = 0;
 /*****************************************************************************/
 
+
+/* Type: Memory address
+ * Use this type whenever dealing with addresses or address masks
+ */
+typedef unsigned long long int mem_addr_t;
+
+/* Type: Cache line
+ * TODO
+ *
+ * NOTE:
+ * You might (not necessarily though) want to add an extra field to this struct
+ * depending on your implementation
+ *
+ * For example, to use a linked list based LRU,
+ * you might want to have a field "struct cache_line * next" in the struct
+ */
+typedef struct cache_line {
+    char valid;
+    mem_addr_t tag;
+    int counter;
+    struct cache_line * next;
+} cache_line_t;
+
+typedef cache_line_t* cache_set_t;	//pointer to an array of lines in a set
+typedef cache_set_t* cache_t; 		//pointer to an array of sets in the cache
+
+
+/* The cache we are simulating */
+cache_t cache;
+
+/* TODO - COMPLETE THIS FUNCTION
+ * initCache -
+ * Allocate data structures to hold info regrading the sets and cache lines
+ * use struct "cache_line_t" here
+ * Initialize valid and tag field with 0s.
+ * use S (= 2^s) and E while allocating the data structures here
+ */
+void initCache()
+{
+	// Compute S = 2^s and B = 2^b
+	S = ( 1 << s);
+	B = ( 1 << b);
+
+	// Initialize the cache
+	cache = malloc(S * sizeof(cache_set_t));		//allocate space for S number of sets
+	for (int i = 0; i < S; i++) {
+
+		cache[i] = malloc(E * sizeof(cache_line_t));	//allocate space for E number of lines in each set
+		for (int j = 0; j < E; j++) {
+			cache[i][j].valid = 0;
+			cache[i][j].tag = 0;
+			cache[i][j].counter = 0;
+			cache[i][j].next = NULL;
+
+			//set next of previous line to current line
+			if (i > 0 && j==0) { //if it is the beginning of a new set and there is a previous set
+				cache[i-1][E-1].next = &cache[i][j];
+			}
+			else if (j>0) { //as long as not at the first line at index i=0 j=0, set next of previous line
+				cache[i][j-1].next = &cache[i][j];
+			}
+		}
+	}
+
+}
+
+
+/* TODO - COMPLETE THIS FUNCTION
+ * freeCache - free each piece of memory you allocated using malloc
+ * inside initCache() function
+ */
+void freeCache()
+{
+	for (int i = 0; i < E; i++) {
+		free(*(cache + i));
+	}
+	free(cache);
+	cache = NULL;
+}
+
+/* TODO - COMPLETE THIS FUNCTION
+ * accessData - Access data at memory address addr.
+ *   If it is already in cache, increase hit_count
+ *   If it is not in cache, bring it in cache, increase miss count.
+ *   Also increase eviction_count if a line is evicted.
+ *   you will manipulate data structures allocated in initCache() here
+ */
+void accessData(mem_addr_t addr)
+{
+	int minLRU = INT_MAX; 	//min counter in the set
+	int maxLRU = 0;		//max counter in the set
+
+	// Get the address of the first s bit, and the set number of addr
+	mem_addr_t sBit = addr >> b;
+	mem_addr_t set = sBit & ((int)pow(2,s) - 1);
+
+	// Get the address of the first t bit, and the tag of addr
+	mem_addr_t tBit = addr >> (b + s);
+	mem_addr_t tag = tBit & ((int)pow(2, 64 - (b+s)) -1);
+
+	// Search the set for the largest counter value
+	for (int i = 0; i < E; i++) {
+		if ( (*(cache + set) + i)->counter > maxLRU && (*(cache + set) + i)->valid == 1) {
+			maxLRU = (*(cache + set) + i)->counter;
+		}
+	}
+
+	// If there is a hit, update hit_count and most recently used line
+	for (int i = 0; i < E; i++) {
+		if ( (*(cache + set) + i)->tag == tag && (*(cache + set) + i)->valid == 1) {
+			(*(cache + set) + i)->counter = maxLRU + 1;
+			hit_count++;
+			return;
+		}
+	}
+
+	// If there is a miss, update miss_count and set the line
+	for (int i = 0; i < E; i++) {
+		if ( (*(cache + set) + i)->valid == 0) {
+			(*(cache + set) + i)->tag = tag;
+			(*(cache + set) + i)->valid = 1;
+			(*(cache + set) + i)->counter = maxLRU + 1;
+			miss_count++;
+			return;
+		}
+	}
+
+	// If there is an eviction necessary, find the lowest line counter value (i.e. the LRU line)
+	// Then replace that line with the new one
+	for (int i = 0; i < E; i++) { //find the LRU line
+		if ( (*(cache + set) + i)->counter < minLRU && (*(cache + set) + i)->valid == 1) {
+			minLRU = (*(cache + set) + i)->counter;
+		}
+	}
+	for (int i = 0; i < E; i++) { //evict the line
+		if ( (*(cache + set) + i)->counter == minLRU) {
+			(*(cache + set) + i)->tag = tag;
+			(*(cache + set) + i)->valid = 1;
+			(*(cache + set) + i)->counter = maxLRU + 1;
+			miss_count++;
+			eviction_count++;
+			return;
+		}
+	}
+}
+
+/* TODO - FILL IN THE MISSING CODE
+ * replayTrace - replays the given trace file against the cache
+ * reads the input trace file line by line
+ * extracts the type of each memory access : L/S/M
+ * YOU MUST TRANSLATE one "L" as a load i.e. 1 memory access
+ * YOU MUST TRANSLATE one "S" as a store i.e. 1 memory access
+ * YOU MUST TRANSLATE one "M" as a load followed by a store i.e. 2 memory accesses
+ */
+void replayTrace(char* trace_fn)
+{
+    char buf[1000];
+    mem_addr_t addr=0;
+    unsigned int len=0;
+    FILE* trace_fp = fopen(trace_fn, "r");
+
+    if(!trace_fp){
+        fprintf(stderr, "%s: %s\n", trace_fn, strerror(errno));
+        exit(1);
+    }
+
+    while( fgets(buf, 1000, trace_fp) != NULL) {
+        if(buf[1]=='S' || buf[1]=='L' || buf[1]=='M') {
+        	sscanf(buf+3, "%llx,%u", &addr, &len);
+
+        	if(verbosity)
+                	printf("%c %llx,%u ", buf[1], addr, len);
+
+           // TODO - MISSING CODE
+           // now you have:
+           // 1. address accessed in variable - addr
+           // 2. type of acccess(S/L/M)  in variable - buf[1]
+           // call accessData function here depending on type of access
+
+		accessData(addr);
+
+		if (buf[1] == 'M')
+			accessData(addr);
+
+        	if (verbosity)
+                	printf("\n");
+        }
+    }
+
+    fclose(trace_fp);
+}
+
+/*
+ * printUsage - Print usage info
+ */
 void printUsage(char* argv[])
 {
     printf("Usage: %s [-hv] -s <num> -E <num> -b <num> -t <file>\n", argv[0]);
@@ -47,9 +242,25 @@ void printUsage(char* argv[])
     exit(0);
 }
 
+/*
+ * printSummary - Summarize the cache simulation statistics. Student cache simulators
+ *                must call this function in order to be properly autograded.
+ */
+void printSummary(int hits, int misses, int evictions)
+{
+    printf("hits:%d misses:%d evictions:%d\n", hits, misses, evictions);
+    FILE* output_fp = fopen(".csim_results", "w");
+    assert(output_fp);
+    fprintf(output_fp, "%d %d %d\n", hits, misses, evictions);
+    fclose(output_fp);
+}
+
+/*
+ * main - Main routine
+ */
 int main(int argc, char* argv[])
 {
-  char c;
+    char c;
 
     // Parse the command line arguments: -h, -v, -s, -E, -b, -t
     while( (c=getopt(argc,argv,"s:E:b:t:vh")) != -1){
@@ -81,21 +292,19 @@ int main(int argc, char* argv[])
     /* Make sure that all required command line args were specified */
     if (s == 0 || E == 0 || b == 0 || trace_file == NULL) {
         printf("%s: Missing required command line argument\n", argv[0]);
-        //printUsage(argv);
+        printUsage(argv);
         exit(1);
     }
 
-    exit(2);
-
     /* Initialize cache */
-    //initCache();
+    initCache();
 
-    //replayTrace(trace_file);
+    replayTrace(trace_file);
 
     /* Free allocated memory */
-    //freeCache();
+    freeCache();
 
     /* Output the hit and miss statistics for the autograder */
-    //printSummary(hit_count, miss_count, eviction_count);
+    printSummary(hit_count, miss_count, eviction_count);
     return 0;
 }
