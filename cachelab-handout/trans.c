@@ -34,77 +34,49 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 
 	if (N == 32)
 	{
-		//Finding optimal block sizes included some guess-work; increased B-size for larger M & N when M == N proved less 		 //efficient. However, when M != N, i.e. rectangular matrix, larger B was the way to go.
-		for (col_block = 0; col_block < N; col_block += 8)
-		{
-			for (row_block = 0; row_block < N; row_block += 8)
-			{
-
-				for (i = row_block; i < row_block + 8; i ++)
-				{
-
-					for (j = col_block; j < col_block + 8; j ++)
-					{
-						if (i != j)
-						{
-							B[j][i] = A[i][j];
-						}
-						 else {
-							//Reduce misses m < i*j in B by storing in temp instead of missing in B[j][i]
-							temp = A[i][j];
-							diag = i;
-						}
-					}
-
-					//Transpose of a square-matrix has a unique property; no need to move elements on the diagonal.
-
-					if (row_block == col_block)
-					{
-						//Misses in B reduced to m < i
-						B[diag][diag] = temp;
-					}
-				}
-
-			}
-		}
-
-	}
-
-	else if (N == 64)
-	{
-
-		//Iterate through matrix using column-major iteration over blocks
-		for (col_block = 0; col_block < N; col_block += 4)
-		{
-			for (row_block = 0; row_block < N; row_block += 4)
-			{
-				//Iterate over each row using row-major iteration
-				for (i = row_block; i < row_block + 4; i ++)
-				{
-					for (j = col_block; j < col_block + 4; j ++)
-					{
-						if (i != j)
-						{
-							B[j][i] = A[i][j];
-						}
-						else {
-							//On the diagonal
-							temp = A[i][j];
-							diag = i;
-						}
-					}
-
-					if (row_block == col_block)
-					{
-						B[diag][diag] = temp;
-					}
-				}
-
-			}
-		}
-
-
-	}
+    int i,j,tmp,index;
+    int row_Block,col_Block;
+    if(M==32)
+    {   //separate the the 32X32 block into 8X8 , decrease the number of misses
+        for(row_Block = 0;row_Block < N ;row_Block+=8){
+            for(col_Block =0 ;col_Block < M; col_Block+=8){
+                for(i=row_Block ; i<row_Block+8;i++){
+                    for(j=col_Block;j<col_Block+8;j++){
+                        if(i!=j){
+                            B[j][i] = A[i][j];
+                        }else{
+                            tmp = A[i][j];                  //i==j means is the diagonal. if we set B right now ,the  misses and evictions will increase . because the cache set of B is same to A.
+                            index = i;
+                        }
+                    }
+                    if(col_Block == row_Block){             //just set B on the diagonal. other than shouldn't set the B
+                        B[index][index] = tmp;
+                    }
+                }
+            }
+        }
+    }
+    else if(M==64)
+    {
+         //separate the the 32X32 block into 8X8 , decrease the number of misses
+        for(row_Block = 0;row_Block < N ;row_Block+=4){
+            for(col_Block =0 ;col_Block < M; col_Block+=4){
+                for(i=row_Block ; i<row_Block+4;i++){
+                    for(j=col_Block;j<col_Block+4;j++){
+                        if(i!=j){
+                            B[j][i] = A[i][j];
+                        }else{
+                            tmp = A[i][j];                  //i==j means is the diagonal. if we set B right now ,the  misses and evictions will increase . because the cache set of B is same to A.
+                            index = i;
+                        }
+                    }
+                    if(col_Block == row_Block){             //just set B on the diagonal. other than shouldn't set the B
+                        B[index][index] = tmp;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*
