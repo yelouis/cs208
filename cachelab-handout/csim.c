@@ -159,7 +159,7 @@ void printUsage(char* argv[])
 
 void printSummary(int hits, int misses, int switches)
 {
-    printf("hits:%d misses:%d switches:%d\n", hits, misses, switches);
+    printf("hits:%d misses:%d evictions:%d\n", hits, misses, switches);
     FILE* output_fp = fopen(".csim_results", "w");
     assert(output_fp);
     fprintf(output_fp, "%d %d %d\n", hits, misses, switches);
