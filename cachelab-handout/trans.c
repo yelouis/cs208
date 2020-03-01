@@ -24,61 +24,32 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-  int col_n;
-  int row_n;
-  int i = 0;
-  int j = 0;
-  int d = 0;
-  int miss_save;
-  int m_2;
-  int b_size = 8;
-  int b_size_64 = 4;
-
-  if(M == 32){
-    for(row_n = 0; row_n < M; row_n += b_size){
-      for(col_n =0; col_n < M; col_n += b_size){
-        for(i = row_n; i < row_n + b_size; i++){
-          for(j = col_n; j < col_n + b_size; j++){
-            if(i == j){
-              d = i;
-      	      //for the transpose of an even numbered matrix, the elements on the diagonal will remain in place.
-      	      //store the value, to resolve the 'miss'
-              miss_save = A[i][j];
-            }
-            else{
-	             //swap the appropriate elements rows-> cols and cols -> rows
-               B[j][i] = A[i][j];
-             }
-           }
-           if(row_n == col_n){
-	            //place 'miss' on the appropriate diagonal index of the output matrix B
-              B[d][d] = miss_save;
-            }
-          }
-        }
-      }
-    }
-    else if(M == 64){
-      //works identically to the base case, adjusts the block size to 4
-      for(row_n = 0; row_n < M; row_n += b_size_64){
-        for(col_n =0; col_n < M; col_n += b_size_64){
-          for(i = row_n; i < row_n + b_size_64; i++){
-            for(j = col_n; j < col_n + b_size_64; j++){
-              if(i == j){
-                d = i;
-                m_2 = A[i][j];
+  int diagonal = 0;
+  int diagonal_index = 0;
+  int x_block = 0; // Set these based on size of M
+  int y_block = 0;
+  if (M == 32) {
+      x_block = 8;
+      y_block = 8;
+  } else { // For 64 x 64
+      x_block = 4;
+      y_block = 4;
+  }
+  for (int i = 0; i < N; i += x_block) {
+      for (int j = 0; j < M; j += y_block) {
+          for (int k = i; k < i + x_block && k < N; ++k) {
+              for (int l = j; l < j + y_block && l < M; ++l) {
+                  if (l != k) { // Defer elements on the diagonal
+                      B[l][k] = A[k][l];
+                  } else if (l == k) {
+                      diagonal = A[l][l];
+                      diagonal_index = l;
+                  }
               }
-              else{
-
-                B[j][i] = A[i][j];
+              if (i == j && k < N) {
+                  B[diagonal_index][diagonal_index] = diagonal;
               }
-            }
-
-            if(row_n == col_n){
-              B[d][d] = m_2;
-            }
           }
-        }
       }
   }
 }
