@@ -1,6 +1,6 @@
 // Louis Ye 1999922
 
-#include "cachelab.h"
+// #include "cachelab.h"
 
 #include <getopt.h>
 #include <stdlib.h>
