@@ -24,66 +24,66 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-  int n, m; 		// Indecies for rows and columns in matrix
-	int row, col;	// Track current row and column in matrix
-	int d_val = 0;	// Hold value of diagonal element found in matrix (detailed in below code)
-	int diag = 0;	// Hold position of diagonal element found in matrix (detailed in below code)
+  int col_n;
+  int row_n;
+  int i = 0;
+  int j = 0;
+  int d = 0;
+  int miss_save;
+  int m_2;
+  int m_3;
+  int b_size = 8;
+  int b_size_64 = 4;
+  int b_size_67 = 16;
 
-  if(N == 32){
-    for (col = 0; col < N; col += 8) {
-      for (row = 0; row < N; row += 8) {
-
-        // For each row and column in the designated block, until end of matrix
-        for (n = row; n < (row + 8); n++) {
-          for (m = col; m < (col + 8); m++) {
-
-            // If row and column do not match, transposition will occur
-            if (n != m) {
-              B[m][n] = A[n][m];
-            // Else, row and column are same and element in matrix is defined as a diagonal
-            } else {
-
-              // Assign diagonal element to a temporary variable
-              // This saves an individual cache miss on each run through the matrix where the columns and rows still match up
-              diag = n;
-              d_val = A[n][m];
+  //program arranged by converting pseudeocode/reading an academic paper created by the Georgia Tech CS department
+  //URL:http://www.cc.gatech.edu/~bader/COURSES/UNM/ece637-Fall2003/papers/KW03.pdf
+  if(M == 32){
+    for(row_n = 0; row_n < M; row_n += b_size){
+      for(col_n =0; col_n < M; col_n += b_size){
+        for(i = row_n; i < row_n + b_size; i++){
+          for(j = col_n; j < col_n + b_size; j++){
+            if(i == j){
+              d = i;
+      	      //for the transpose of an even numbered matrix, the elements on the diagonal will remain in place.
+      	      //store the value, to resolve the 'miss'
+              miss_save = A[i][j];
             }
-          }
-          // If row and column are same, element is defined as a diagonal and our temporarily saved element is assigned
-          if (row == col) {
-            B[diag][diag] = d_val;
+            else{
+	             //swap the appropriate elements rows-> cols and cols -> rows
+               B[j][i] = A[i][j];
+             }
+           }
+           if(row_n == col_n){
+	            //place 'miss' on the appropriate diagonal index of the output matrix B
+              B[d][d] = miss_save;
+            }
           }
         }
       }
     }
-  }else if(N == 64){
-    // Iterates through each column and row
-  	for (col = 0; col < N; col += 4) {
-  		for (row = 0; row < N; row += 4) {
+    else if(M == 64){
+      //works identically to the base case, adjusts the block size to 4
+      for(row_n = 0; row_n < M; row_n += b_size_64){
+        for(col_n =0; col_n < M; col_n += b_size_64){
+          for(i = row_n; i < row_n + b_size_64; i++){
+            for(j = col_n; j < col_n + b_size_64; j++){
+              if(i == j){
+                d = i;
+                m_2 = A[i][j];
+              }
+              else{
 
-  			// For each row and column in the designated block, until end of matrix
-  			for (n = row; n < (row + 4); n++) {
-  				for (m = col; m < (col + 4); m++) {
+                B[j][i] = A[i][j];
+              }
+            }
 
-  					// If row and column number do not match, transposition will occur
-  					if (n != m) {
-  						B[m][n] = A[n][m];
-  					// Else, row and column number are same and element in matrix is defined as a diagonal
-  					} else {
-
-  						// Assign diagonal element to a temporary variable
-  						// This saves an individual cache miss on each run through the matrix where the columns and rows still match up
-  						diag = n;
-  						d_val = A[n][m];
-  					}
-  				}
-  				// If row and column are same, element is defined as a diagonal and our temporarily saved element is assigned
-  				if (row == col) {
-  					B[diag][diag] = d_val;
-  				}
-  			}
-  		}
-  	}
+            if(row_n == col_n){
+              B[d][d] = m_2;
+            }
+          }
+        }
+      }
   }
 }
 
