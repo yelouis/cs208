@@ -29,7 +29,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 	int d_val = 0;	// Hold value of diagonal element found in matrix (detailed in below code)
 	int diag = 0;	// Hold position of diagonal element found in matrix (detailed in below code)
 
-  if(N = 32){
+  if(N == 32){
     for (col = 0; col < N; col += 8) {
       for (row = 0; row < N; row += 8) {
 
@@ -56,7 +56,7 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
         }
       }
     }
-  }else if(N=64){
+  }else if(N == 64){
     // Iterates through each column and row
   	for (col = 0; col < N; col += 4) {
   		for (row = 0; row < N; row += 4) {
