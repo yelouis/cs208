@@ -112,7 +112,7 @@ def main():
     print "%22s%8.1f%10d" % ("Total points", total_score,
                              maxscore['csim'] + 
                              maxscore['trans32'] + 
-                             maxscore['trans64']
+                             maxscore['trans64'])
     
     # Emit autoresult string for Autolab if called with -A option
     if autograde:
