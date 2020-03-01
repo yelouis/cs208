@@ -1,4 +1,4 @@
-/* 
+/*
  * trans.c - Matrix transpose B = A^T
  *
  * Each transpose function must have a prototype of the form:
@@ -6,30 +6,119 @@
  *
  * A transpose function is evaluated by counting the number of misses
  * on a 1KB direct mapped cache with a block size of 32 bytes.
- */ 
+ */
 #include <stdio.h>
 #include "cachelab.h"
 
 int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 
-/* 
+/*
  * transpose_submit - This is the solution transpose function that you
  *     will be graded on for Part B of the assignment. Do not change
  *     the description string "Transpose submission", as the driver
  *     searches for that string to identify the transpose function to
- *     be graded. 
+ *     be graded.
  */
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
+  int blockSize; //variable for size of block, used in each of the iterations, N ==32, N ==63 and the else
+  int blockForRow, blockForCol; //to iterate over blocks, user in outer loops
+  int r, c; //to iterate through each block, used in inner loops
+  int temp = 0, d = 0; //d stands for diagonal, temp is just a temporary variable
+  int v0,v1,v2,v3,v4; //Variables to be used in the N==64 case for various assignments within it
+  	/*
+  	Using blockSize = 8 in this case. Only N == 32 is used in the condition since matrix transpose can
+  	occur for any a*b and c*a where only a needs to be same and b and c can vary.
+  	Blocking is used here.
+  	4 levels of loop sare used here. 2 outer loops iterate accross blocks (in column major iteration) while the 2 inner loops iterate through each block.
+  	*/
+	if (N == 32)
+	{
+		blockSize = 8;
+		for(blockForCol = 0; blockForCol < N; blockForCol += 8)
+		{
+			for(blockForRow = 0; blockForRow < N; blockForRow += 8)
+			{
+				for(r = blockForRow; r < blockForRow + 8; r++)
+				{
+					for(c = blockForCol; c < blockForCol + 8; c++)
+					{
+						//Row and column are not equal
+						if(r != c)
+						{
+							B[c][r] = A[r][c];
+						}
+
+						else
+						{
+						//Store in temp instead of missing in B[j][i] to decrease misses
+						temp = A[r][c];
+						d = r;
+						}
+					}
+					//We don't move elements on diagonals since we are transposing a square matrix
+					if (blockForRow == blockForCol)
+					{
+						B[d][d] = temp;
+					}
+				}
+			}
+		}
+	}
+
+	/* Using blockSize = 4 here.
+	2 levels of loops are used
+	We assign elements in each row individually. Causes reduced missess. */
+	else if (N == 64)
+	{
+ 		blockSize = 4;
+		for(r = 0; r < N; r += blockSize)
+		{
+			for(c = 0; c < M; c += blockSize)
+			{
+				/*Elements in A[r][], A[r+1][], A[r+2][] are assigned to the variables for use throughout this loop
+				This is becuase we are only allowed to modify the second matrix B but not the matrix A */
+				v0 = A[r][c];
+				v1 = A[r+1][c];
+				v2 = A[r+2][c];
+				v3 = A[r+2][c+1];
+				v4 = A[r+2][c+2];
+				//Elements in B[c+3][] are assigned
+				B[c+3][r] = A[r][c+3];
+				B[c+3][r+1] = A[r+1][c+3];
+				B[c+3][r+2] = A[r+2][c+3];
+				//Elements in B[c+2][] are assigned
+				B[c+2][r] = A[r][c+2];
+				B[c+2][r+1] = A[r+1][c+2];
+				B[c+2][r+2] = v4;
+				v4 = A[r+1][c+1];
+				//Elements in B[c+1][] are assigned
+				B[c+1][r] = A[r][c+1];
+				B[c+1][r+1] = v4;
+				B[c+1][r+2] = v3;
+				//Elements in B[c][] are assigned
+				B[c][r] = v0;
+				B[c][r+1] = v1;
+				B[c][r+2] = v2;
+				//Elements in row A[r+3][] are assigned to the left out elements in B (where B has r+3)
+				B[c][r+3] = A[r+3][c];
+				B[c+1][r+3] = A[r+3][c+1];
+				B[c+2][r+3] = A[r+3][c+2];
+				v0 = A[r+3][c+3];
+				//Finally, elements in row B[c+3][] are assigned
+				B[c+3][r+3] = v0;
+			}
+		}
+	}
 }
 
-/* 
+/*
  * You can define additional transpose functions below. We've defined
- * a simple one below to help you get started. 
- */ 
+ * a simple one below to help you get started.
+ */
 
-/* 
+/*
  * trans - A simple baseline transpose function, not optimized for the cache.
  */
 char trans_desc[] = "Simple row-wise scan transpose";
@@ -42,7 +131,7 @@ void trans(int M, int N, int A[N][M], int B[M][N])
             tmp = A[i][j];
             B[j][i] = tmp;
         }
-    }    
+    }
 
 }
 
@@ -56,14 +145,14 @@ void trans(int M, int N, int A[N][M], int B[M][N])
 void registerFunctions()
 {
     /* Register your solution function */
-    registerTransFunction(transpose_submit, transpose_submit_desc); 
+    registerTransFunction(transpose_submit, transpose_submit_desc);
 
     /* Register any additional transpose functions */
-    registerTransFunction(trans, trans_desc); 
+    registerTransFunction(trans, trans_desc);
 
 }
 
-/* 
+/*
  * is_transpose - This helper function checks if B is the transpose of
  *     A. You can check the correctness of your transpose by calling
  *     it before returning from the transpose function.
@@ -81,4 +170,3 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N])
     }
     return 1;
 }
-
