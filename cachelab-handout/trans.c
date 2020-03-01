@@ -24,77 +24,67 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
+  int n, m; 		// Indecies for rows and columns in matrix
+	int row, col;	// Track current row and column in matrix
+	int d_val = 0;	// Hold value of diagonal element found in matrix (detailed in below code)
+	int diag = 0;	// Hold position of diagonal element found in matrix (detailed in below code)
 
-    //create values for i, j, row, and col
-    int i, j, row, col;
-    //have value for diagonal
-    int diagonal = 0;
-    //create a temp value so that you don't have to uselessly store
-    int tmp = 0;
-    if(N == 32){
-         //focus on switching/reversing the column in A
-        for(col=0; col < N; col+=8){
+  if(N = 32){
+    for (col = 0; col < N; col += 8) {
+      for (row = 0; row < N; row += 8) {
 
-            //focus on switching/reversing rows in A
-            for(row=0;row < N; row +=8){
+        // For each row and column in the designated block, until end of matrix
+        for (n = row; n < (row + 8); n++) {
+          for (m = col; m < (col + 8); m++) {
 
-                //iterate through these two for loops so that the now diagonal rows and columns can be
-                //systematically transposed onto B.
-                for(i = row; i < row + 8; i++){
-                    for(j = col; j < col + 8; j++){
-                        //by adding this if statement we can avoid switching the diagonals which don't
-                        //need switching
-                        if(i != j){
-                            B[j][i] = A[i][j];
-                        }
-                        //since diagonal we have to treat it differently otherwise will result in
-                        //unecessary cache miss since the square-type matrix diagonals don't move
-                        //the position can easily be remembered.
-                        else{
-                            tmp = A[i][j];
-                            diagonal = i;
-                        }
-                    }
-                    //using this if statement we can transpose the A values into the B smoothly
-                    if(row == col){
-                        B[diagonal][diagonal] = tmp;
-                    }
-                }
+            // If row and column do not match, transposition will occur
+            if (n != m) {
+              B[m][n] = A[n][m];
+            // Else, row and column are same and element in matrix is defined as a diagonal
+            } else {
+
+              // Assign diagonal element to a temporary variable
+              // This saves an individual cache miss on each run through the matrix where the columns and rows still match up
+              diag = n;
+              d_val = A[n][m];
             }
+          }
+          // If row and column are same, element is defined as a diagonal and our temporarily saved element is assigned
+          if (row == col) {
+            B[diag][diag] = d_val;
+          }
         }
-
+      }
     }
+  }else if(N=64){
+    // Iterates through each column and row
+  	for (col = 0; col < N; col += 4) {
+  		for (row = 0; row < N; row += 4) {
 
-    else if(N == 64){
-         //focus on switching/reversing the column in A
-        for(col=0; col < N; col+=4){
-            //focus on switching/reversing rows in A
-            for(row=0;row < N; row +=4){
-                //iterate through these two for loops so that the now diagonal rows and columns can be
-                //systematically transposed onto B.
-                for(i = row; i < row + 4; i++){
-                    for(j = col; j < col + 4; j++){
-                        //by adding this if statement we can avoid switching the diagonals which don't
-                        //need switching
-                        if(i != j){
-                            B[j][i] = A[i][j];
-                        }
-                        //since diagonal we have to treat it differently otherwise will result in
-                        //unecessary cache miss since the square-type matrix diagonals don't move
-                        //the position can easily be remembered.
-                        else{
-                            tmp = A[i][j];
-                            diagonal = i;
-                        }
-                    }
-                    //using this if statement we can transpose the A values into the B smoothly
-                    if(row == col){
-                        B[diagonal][diagonal] = tmp;
-                    }
-                }
-            }
-        }
-    }
+  			// For each row and column in the designated block, until end of matrix
+  			for (n = row; n < (row + 4); n++) {
+  				for (m = col; m < (col + 4); m++) {
+
+  					// If row and column number do not match, transposition will occur
+  					if (n != m) {
+  						B[m][n] = A[n][m];
+  					// Else, row and column number are same and element in matrix is defined as a diagonal
+  					} else {
+
+  						// Assign diagonal element to a temporary variable
+  						// This saves an individual cache miss on each run through the matrix where the columns and rows still match up
+  						diag = n;
+  						d_val = A[n][m];
+  					}
+  				}
+  				// If row and column are same, element is defined as a diagonal and our temporarily saved element is assigned
+  				if (row == col) {
+  					B[diag][diag] = d_val;
+  				}
+  			}
+  		}
+  	}
+  }
 }
 
 /*
