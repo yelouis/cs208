@@ -13,19 +13,22 @@
 #include <errno.h>
 #include <stdbool.h>
 
-/* Globals set by command line args */
-int verbosity = 0; /* print trace if set */
-int s = 0; /* set index bits */
-int b = 0; /* block offset bits */
-int bigE = 0; /* associativity */
-char* traceFile = NULL;
-
 int bigS;
 int bigB;
 
 int missCount = 0;
 int hitCount = 0;
-int evictionCount = 0;
+int switchCount = 0;
+
+int s = 0;
+int b = 0;
+int bigE = 0;
+char* traceFile = NULL;
+int verbosity = 0;
+
+
+
+
 
 /* Memory address
  * Without using pointers cause we want to simulate addresses and not actual addresses?
@@ -102,7 +105,7 @@ void accessData(memAddr addr)
 			(*(cache + set) + i)->valid = 1;
 			(*(cache + set) + i)->counter = maxLRU + 1;
 			missCount++;
-			evictionCount++;
+			switchCount++;
 			return;
 		}
 	}
@@ -239,6 +242,6 @@ int main(int argc, char* argv[])
   	free(cache);
   	cache = NULL;
 
-    printSummary(hitCount, missCount, evictionCount);
+    printSummary(hitCount, missCount, switchCount);
     return 0;
 }
