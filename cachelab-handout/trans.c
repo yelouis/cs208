@@ -24,72 +24,77 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-  int blockSize;
-  int blockRow, blockCol;
-  int r, c; //to iterate through each block, used in inner loops
-  int temp = 0, d = 0;
-  int v0,v1,v2,v3,v4;
-	if (N == 32)
-	{
-		blockSize = 8;
-		for(blockCol = 0; blockCol < N; blockCol += 8)
-		{
-			for(blockRow = 0; blockRow < N; blockRow += 8)
-			{
-				for(r = blockRow; r < blockRow + 8; r++)
-				{
-					for(c = blockCol; c < blockCol + 8; c++)
-					{
-						if(r != c)
-						{
-							B[c][r] = A[r][c];
-						}
 
-						else
-						{
-						temp = A[r][c];
-						d = r;
-						}
-					}
-					if (blockRow == blockCol)
-					{
-						B[d][d] = temp;
-					}
-				}
-			}
-		}
-	}else if (N == 64){
- 		blockSize = 4;
-		for(r = 0; r < N; r += blockSize)
-		{
-			for(c = 0; c < M; c += blockSize)
-			{
-				v0 = A[r][c];
-				v1 = A[r+1][c];
-				v2 = A[r+2][c];
-				v3 = A[r+2][c+1];
-				v4 = A[r+2][c+2];
-				B[c+3][r] = A[r][c+3];
-				B[c+3][r+1] = A[r+1][c+3];
-				B[c+3][r+2] = A[r+2][c+3];
-				B[c+2][r] = A[r][c+2];
-				B[c+2][r+1] = A[r+1][c+2];
-				B[c+2][r+2] = v4;
-				v4 = A[r+1][c+1];
-				B[c+1][r] = A[r][c+1];
-				B[c+1][r+1] = v4;
-				B[c+1][r+2] = v3;
-				B[c][r] = v0;
-				B[c][r+1] = v1;
-				B[c][r+2] = v2;
-				B[c][r+3] = A[r+3][c];
-				B[c+1][r+3] = A[r+3][c+1];
-				B[c+2][r+3] = A[r+3][c+2];
-				v0 = A[r+3][c+3];
-				B[c+3][r+3] = v0;
-			}
-		}
-	}
+    //create values for i, j, row, and col
+    int i, j, row, col;
+    //have value for diagonal
+    int diagonal = 0;
+    //create a temp value so that you don't have to uselessly store
+    int tmp = 0;
+    if(N == 32){
+         //focus on switching/reversing the column in A
+        for(col=0; col < N; col+=8){
+
+            //focus on switching/reversing rows in A
+            for(row=0;row < N; row +=8){
+
+                //iterate through these two for loops so that the now diagonal rows and columns can be
+                //systematically transposed onto B.
+                for(i = row; i < row + 8; i++){
+                    for(j = col; j < col + 8; j++){
+                        //by adding this if statement we can avoid switching the diagonals which don't
+                        //need switching
+                        if(i != j){
+                            B[j][i] = A[i][j];
+                        }
+                        //since diagonal we have to treat it differently otherwise will result in
+                        //unecessary cache miss since the square-type matrix diagonals don't move
+                        //the position can easily be remembered.
+                        else{
+                            tmp = A[i][j];
+                            diagonal = i;
+                        }
+                    }
+                    //using this if statement we can transpose the A values into the B smoothly
+                    if(row == col){
+                        B[diagonal][diagonal] = tmp;
+                    }
+                }
+            }
+        }
+
+    }
+
+    else if(N == 64){
+         //focus on switching/reversing the column in A
+        for(col=0; col < N; col+=4){
+            //focus on switching/reversing rows in A
+            for(row=0;row < N; row +=4){
+                //iterate through these two for loops so that the now diagonal rows and columns can be
+                //systematically transposed onto B.
+                for(i = row; i < row + 4; i++){
+                    for(j = col; j < col + 4; j++){
+                        //by adding this if statement we can avoid switching the diagonals which don't
+                        //need switching
+                        if(i != j){
+                            B[j][i] = A[i][j];
+                        }
+                        //since diagonal we have to treat it differently otherwise will result in
+                        //unecessary cache miss since the square-type matrix diagonals don't move
+                        //the position can easily be remembered.
+                        else{
+                            tmp = A[i][j];
+                            diagonal = i;
+                        }
+                    }
+                    //using this if statement we can transpose the A values into the B smoothly
+                    if(row == col){
+                        B[diagonal][diagonal] = tmp;
+                    }
+                }
+            }
+        }
+    }
 }
 
 /*
