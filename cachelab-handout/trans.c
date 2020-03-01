@@ -24,14 +24,6 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-  int i, j, row_block, col_block;
-	int diag = 0;
-	int temp = 0;
-
-	/*
-	The access pattern for the defined problem sizes incorporate blocking; we define a sub-matrix of the matrix A with so	 me size b to be a square block. The outer-loops iterate across these block structures, with the two inner loops		  iterating through each block.
-	*/
-
 	if (N == 32)
 	{
     int i,j,tmp,index;
