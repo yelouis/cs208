@@ -31,13 +31,9 @@ void transpose_submit(int M, int N, int A[N][M], int B[M][N])
   int d = 0;
   int miss_save;
   int m_2;
-  int m_3;
   int b_size = 8;
   int b_size_64 = 4;
-  int b_size_67 = 16;
 
-  //program arranged by converting pseudeocode/reading an academic paper created by the Georgia Tech CS department
-  //URL:http://www.cc.gatech.edu/~bader/COURSES/UNM/ece637-Fall2003/papers/KW03.pdf
   if(M == 32){
     for(row_n = 0; row_n < M; row_n += b_size){
       for(col_n =0; col_n < M; col_n += b_size){
