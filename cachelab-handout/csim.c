@@ -76,7 +76,7 @@ void accessData(memAddr addr)
 		}
 	}
 
-	// If there is a miss, update missCount and set the line
+	// If there is a miss, update missCount
 	for (int i = 0; i < bigE; i++) {
 		if ( (*(cache + set) + i)->valid == 0) {
 			(*(cache + set) + i)->tag = tag;
