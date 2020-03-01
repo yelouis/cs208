@@ -11,9 +11,6 @@
 #include <errno.h>
 #include <stdbool.h>
 
-/****************************************************************************/
-/***** DO NOT MODIFY THESE VARIABLE NAMES ***********************************/
-
 /* Globals set by command line args */
 int verbosity = 0; /* print trace if set */
 int s = 0; /* set index bits */
@@ -29,8 +26,6 @@ int B; /* block size (bytes) B = 2^b */
 int miss_count = 0;
 int hit_count = 0;
 int eviction_count = 0;
-/*****************************************************************************/
-
 
 /* Type: Memory address
  * Use this type whenever dealing with addresses or address masks
