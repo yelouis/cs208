@@ -1,0 +1,8 @@
+Something I learned:
+We choose to divide the cache into a 8x8 block because accessing the data within a 8x8 block will only cause cold misses. We can get away with loading our cache once and filling it up with stuff that is going to be in it before we evict with something else. That is why our running time is going to be faster. I rate this homework a 4 because I spent a lot of time on it.
+
+Difficulty:
+The difficulty of this homework was challenging because we had to create our own structures.
+
+Time Spent:
+3 work nights: 18 hours
