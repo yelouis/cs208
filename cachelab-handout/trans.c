@@ -24,34 +24,72 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-  int diagonal = 0;
-  int diagonal_index = 0;
-  int x_block = 0; // Set these based on size of M
-  int y_block = 0;
-  if (M == 32) {
-      x_block = 8;
-      y_block = 8;
-  } else { // For 64 x 64
-      x_block = 4;
-      y_block = 4;
-  }
-  for (int i = 0; i < N; i += x_block) {
-      for (int j = 0; j < M; j += y_block) {
-          for (int k = i; k < i + x_block && k < N; ++k) {
-              for (int l = j; l < j + y_block && l < M; ++l) {
-                  if (l != k) { // Defer elements on the diagonal
-                      B[l][k] = A[k][l];
-                  } else if (l == k) {
-                      diagonal = A[l][l];
-                      diagonal_index = l;
-                  }
-              }
-              if (i == j && k < N) {
-                  B[diagonal_index][diagonal_index] = diagonal;
-              }
-          }
-      }
-  }
+  //use the blocking, Luke!
+	int blocksize = 0, blockrow = 0, blockcolumn = 0, j = 0, i = 0, temp = 0, s = 0, d = 0;
+	/*
+	d = diagonal index of a referenced item
+	s = stores status of accessed element
+	blocksize = how big we want to block, usually a subset of the whole [N][M] matrix
+	blockrow =
+	using the idea of blocking to break up the data so that when it is accessed by the cache it is already near the data it needs
+	*/
+
+	//32x32 matrix
+	if(M == 32 && N == 32){
+	blocksize = 8; //after experimenting with different block sizes, 8 works best to reduce misses
+
+		for(blockrow = 0; blockrow < N; blockrow += blocksize){
+			for(blockcolumn = 0; blockcolumn < M; blockcolumn += blocksize){
+				for(i = blockrow; i < blockrow + blocksize; i++){
+					for(j = blockcolumn; j < blockcolumn + blocksize; ++j){
+						if(j != i){ //these are the diagonals, so dont touch them
+							//if j and i are the same its a diagonal and do that in the else statement
+							B[j][i] = A[i][j]; //if it is not a diagonal, just transpose that thing
+						}
+						else{
+							temp = A[i][j]; //save the value in a temp, so that we dont fuck up the locality of the cache at that point
+							d = i; //save the diagonal index so we can transpose it after this loop, like storing datas
+							s = 1; //set the status so that we know to translate the diagonal element
+						}
+					}
+					//now we need to transpose the elements when the status bit is set
+					if(s == 1){
+						B[d][d] = temp; //assign the temp now that we're done with that cache section
+						s = 0;
+					}
+				}
+			}
+		}
+	}
+
+	//64x64 matrix
+	if(M == 64 && N == 64){
+	blocksize = 4; //after experimenting with different block sizes, 4 works best to reduce misses (and its still a lot)
+
+		for(blockcolumn = 0; blockcolumn < N; blockcolumn += blocksize){
+			for(blockrow = 0; blockrow < M; blockrow += blocksize){
+				for(i = blockrow; i < blockrow + blocksize; i++){
+					for(j = blockcolumn; j < blockcolumn + blocksize; ++j){
+						if(i != j){ //these are the diagonals, so dont touch them
+							//if j and i are the same its a diagonal and do that in the else statement
+							B[j][i] = A[i][j]; //if it is not a diagonal, just transpose that thing
+						}
+						else{
+							temp = A[i][j]; //save the value in a temp, so that we dont fuck up the locality of the cache at that point
+							d = i; //save the diagonal index so we can transpose it after this loop, like storing datas
+							s = 1; //set the status so that we know to translate the diagonal element
+						}
+					}
+					//now we need to transpose the elements when the status bit is set
+					if(s == 1){
+						B[d][d] = temp; //assign the temp now that we're done with that cache section
+						s = 0;
+					}
+				}
+			}
+		}
+	}
+
 }
 
 /*
