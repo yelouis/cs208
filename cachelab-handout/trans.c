@@ -24,49 +24,75 @@ int is_transpose(int M, int N, int A[N][M], int B[M][N]);
 char transpose_submit_desc[] = "Transpose submission";
 void transpose_submit(int M, int N, int A[N][M], int B[M][N])
 {
-    int i,j,tmp,index;
-    int row_Block,col_Block;
-    if(M==32)
-    {   //separate the the 32X32 block into 8X8 , decrease the number of misses
-        for(row_Block = 0;row_Block < N ;row_Block+=8){
-            for(col_Block =0 ;col_Block < M; col_Block+=8){
-                for(i=row_Block ; i<row_Block+8;i++){
-                    for(j=col_Block;j<col_Block+8;j++){
-                        if(i!=j){
-                            B[j][i] = A[i][j];
-                        }else{
-                            tmp = A[i][j];                  //i==j means is the diagonal. if we set B right now ,the  misses and evictions will increase . because the cache set of B is same to A.
-                            index = i;
-                        }
-                    }
-                    if(col_Block == row_Block){             //just set B on the diagonal. other than shouldn't set the B
-                        B[index][index] = tmp;
-                    }
-                }
-            }
-        }
-    }
-    else if(M==64)
-    {
-         //separate the the 32X32 block into 8X8 , decrease the number of misses
-        for(row_Block = 0;row_Block < N ;row_Block+=4){
-            for(col_Block =0 ;col_Block < M; col_Block+=4){
-                for(i=row_Block ; i<row_Block+4;i++){
-                    for(j=col_Block;j<col_Block+4;j++){
-                        if(i!=j){
-                            B[j][i] = A[i][j];
-                        }else{
-                            tmp = A[i][j];                  //i==j means is the diagonal. if we set B right now ,the  misses and evictions will increase . because the cache set of B is same to A.
-                            index = i;
-                        }
-                    }
-                    if(col_Block == row_Block){             //just set B on the diagonal. other than shouldn't set the B
-                        B[index][index] = tmp;
-                    }
-                }
-            }
-        }
-    }
+  int rowCount;
+	int colCount;
+	int rowSector;
+	int columnSector;
+	//This is to prevent cache misses along the diagonal
+	int diagonal = 0;
+	//Variable that takes advantage of temporal locality (i.e. keeping something inside a cahce to prevent misses
+	int temporal = 0;
+	//For the 64x64 matrix case
+	//We use the same looping structure for 64x64 or 32x32 matrices, only this that changes is size of the sector (based on blocks' proximity to diagonal line)
+	//Also, thought there seems to be duplication between the loops, it is due to the general avoidance of local variables
+	if(N == 32 && M == 32){
+			//We can block 8 at a time, optimal size since its a cache at a time
+			for(columnSector = 0; columnSector < N; columnSector += 8){
+				for(rowSector = 0; rowSector < N; rowSector += 8){
+					//Now we cycle within one block, so we loop sector at a time
+					for(rowCount = rowSector; rowCount < rowSector + 8; rowCount++){
+						for(colCount = columnSector; colCount < columnSector + 8; colCount++){
+							//As long as we are not on the diagonal, we put the value
+							//from A[row][column] into B[column][row], the heart of transposing
+							if(rowCount != colCount){
+								B[colCount][rowCount] = A[rowCount][colCount];
+
+							}
+							else{
+								//The digonal variable keeps to data in a cache utilizing spatial locality
+								diagonal = rowCount;
+								//Temporal uses...temporal locality
+								temporal = A[rowCount][colCount];
+							}
+						}
+						//In a square matrix, if the sector we are blocking off contains
+						//the diagonal, then we keep those elements the same.
+						//Doint it this way reduces the amount of misses
+						if(columnSector == rowSector){
+							B[diagonal][diagonal] = temporal;
+						}//end if statement
+					}//end rowCount for loop
+				}//end rowSector for loop
+			}//end columnSector for loop
+		}//end N == 32 If statement
+        else if(N == 64){
+		//We can block 8 at a time, optimal size since its a byte squared at a time
+			for(columnSector = 0; columnSector < M; columnSector += 4){
+				for(rowSector = 0; rowSector < N; rowSector += 4){
+					for(rowCount = rowSector; rowCount < rowSector + 4 ; rowCount++){
+						for(colCount = columnSector; colCount < columnSector + 4 ; colCount++){
+							//As long as we are not on the diagonal, we put the value
+							//from A[row][column] into B[column][row], the heart of transposing
+							if(rowCount != colCount){
+								B[colCount][rowCount] = A[rowCount][colCount];
+							}
+							else{
+								//The digonal variable keeps to data in a cache utilizing spatial locality
+								diagonal = rowCount;
+								//Temporal uses...temporal locality
+								temporal = A[rowCount][colCount];
+							}
+						}
+						//In a square matrix, if the sector we are blocking off contains
+						//the diagonal, then we keep those elements the same.
+						//Doint it this way reduces the amount of misses
+						if(columnSector == rowSector){
+							B[diagonal][diagonal] = temporal;
+						}//end if statement
+					}//end rowCount for loop
+			}//end rowSector for loop
+		}//end columnSector for loop
+	}//end N == 64 If statement
 }
 
 /*
