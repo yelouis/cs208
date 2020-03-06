@@ -125,7 +125,7 @@ int mm_init(void) {
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
-
+    print_heap();
     return 0;
 }
 
@@ -151,19 +151,21 @@ void *mm_malloc(size_t size) {
         /* Add overhead and then round up to nearest multiple of double-word alignment */
         asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     }
-
+    check_heap(__LINE__);
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
-
+    check_heap(__LINE__);
     /* No fit found. Get more memory and place the block */
     extendsize = max(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize / WSIZE)) == NULL)
         return NULL;
 
+    check_heap(__LINE__);
     place(bp, asize);
+    check_heap(__LINE__);
     return bp;
 }
 
@@ -186,14 +188,17 @@ void mm_free(void *bp) {
     if(GET_ALLOC(curHdr) == 0x0){
         printf("The block is already free!");
         return;
-    }
+    }   
 
     size_t blockSize = GET_SIZE(curHdr);
+
+    check_heap(__LINE__);
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
-
+    
+    check_heap(__LINE__);
     coalesce(bp);
-
+    check_heap(__LINE__);
 
 
     // If GET_ALLOC of that pointer is 0, we can just return and print a message out
@@ -249,20 +254,24 @@ static void place(void *bp, size_t asize) {
 
     //check if slitting is necessary
     if (totalFreeSize == asize){
+        check_heap(__LINE__);
         PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
         PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+        check_heap(__LINE__);
         return;
     }
 
     size_t leftOverSize = totalFreeSize - asize;
 
     //header and footer of asize block
+    check_heap(__LINE__);
     PUT(curHdr, PACK(asize - 16, 1));
     PUT(PADD(curHdr, asize - 8), PACK(asize-16,1));
 
     //header and footer of leftover space
     PUT(PADD(curHdr, asize), PACK(leftOverSize, 0));
     PUT(curFtr, PACK(leftOverSize, 0));
+    check_heap(__LINE__);
     return;
 
     // freeSize = GET_SIZE(HDRP(bp))
@@ -294,8 +303,10 @@ static void *coalesce(void *bp) {
         size_t totalSize = sizeCur + sizePre +sizePost + 32;
 
         //coalesce with pre
+        check_heap(__LINE__);
         PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
+        check_heap(__LINE__);
         return PREV_BLKP(bp);
     }
     else if(prevBlock == 0x0){
@@ -303,8 +314,10 @@ static void *coalesce(void *bp) {
         size_t sizePre = GET_SIZE(bp);
         size_t totalSize = sizeCur + sizePre + 16;
 
+        check_heap(__LINE__);
         PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
         PUT(FTRP(bp), PACK(totalSize, 0));
+        check_heap(__LINE__);
         return PREV_BLKP(bp);
     }
     else if(nextBlock == 0x0){
@@ -312,8 +325,10 @@ static void *coalesce(void *bp) {
         size_t sizePost = GET_SIZE(NEXT_BLKP(bp));
         size_t totalSize = sizeCur +sizePost + 16;
 
+        check_heap(__LINE__);
         PUT(HDRP(bp), PACK(totalSize, 0));
         PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
+        check_heap(__LINE__);
         return bp;
     }
 
