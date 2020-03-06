@@ -176,7 +176,8 @@ void *mm_malloc(size_t size) {
  * Postcondition: Valid bit becomes 0.
  */
 void mm_free(void *bp) {
-    // TODO: implement this function
+    
+    // I say hi
 
     // If GET_ALLOC of that pointer is 0, we can just return and print a message out
     // to indicate that the block was already freed.
