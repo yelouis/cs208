@@ -253,7 +253,12 @@ static void *coalesce(void *bp) {
 
     // coalescePrev:
     // If both current and prev are not allocated.
-    // 
+    // !GET_ALLOC(PREV_BLKP(bp)) & !GET_ALLOC(bp):
+    // size1 = GET_SIZE(PREV_BLKP(bp))
+    // size2 = GET_SIZE(bp)
+    // totalSize = size1 + size2 + 16
+    // PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0))
+    // PUT(FTRP(bp), PACK(totalSize, 0))
 
     return bp;
 }
