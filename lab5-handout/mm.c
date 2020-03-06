@@ -83,7 +83,7 @@ team_t team = {
 
 /* Given block ptr bp, compute address of next and previous blocks */
 #define NEXT_BLKP(bp)  (PADD(bp, GET_SIZE(HDRP(bp))))
-#define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE))))
+#define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Global variables */
 
@@ -119,6 +119,8 @@ int mm_init(void) {
     PUT(PADD(heap_start, WSIZE + DSIZE), PACK(0, 1));   /* epilogue header */
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
+
+    printf("get to init");
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
@@ -176,8 +178,23 @@ void *mm_malloc(size_t size) {
  * Postcondition: Valid bit becomes 0.
  */
 void mm_free(void *bp) {
-    
-    // I say hi
+
+    char *curHdr = HDRP(bp);
+    char *curFtr = FTRP(bp);
+
+    //check if the current block is allocated
+    if(GET_ALLOC(curHdr) == 0x0){
+        printf("The block is already free!");
+        return;
+    }
+
+    size_t blockSize = GET_SIZE(curHdr);
+    PUT(curHdr, PACK(blockSize, 0x0));
+    PUT(curFtr, PACK(blockSize, 0x0));
+
+    coalesce(bp);
+
+
 
     // If GET_ALLOC of that pointer is 0, we can just return and print a message out
     // to indicate that the block was already freed.
@@ -225,7 +242,28 @@ void *mm_realloc(void *ptr, size_t size) {
  * Postcondition: Placed block has an allocated tag
  */
 static void place(void *bp, size_t asize) {
-    // TODO: improve this function
+    
+    char *curHdr = HDRP(bp);
+    char *curFtr = FTRP(bp);
+    size_t totalFreeSize = GET_SIZE(curHdr);
+
+    //check if slitting is necessary
+    if (totalFreeSize == asize){
+        PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+        PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+        return;
+    }
+
+    size_t leftOverSize = totalFreeSize - asize;
+
+    //header and footer of asize block
+    PUT(curHdr, PACK(asize - 16, 1));
+    PUT(PADD(curHdr, asize - 8), PACK(asize-16,1));
+
+    //header and footer of leftover space
+    PUT(PADD(curHdr, asize), PACK(leftOverSize, 0));
+    PUT(curFtr, PACK(leftOverSize, 0));
+    return;
 
     // freeSize = GET_SIZE(HDRP(bp))
     // leftoverSpace = freeSize - asize
@@ -236,8 +274,7 @@ static void place(void *bp, size_t asize) {
 
     // REPLACE THIS
     // currently does no splitting, just allocates the entire free block
-    PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-    PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+    
 }
 
 /*
@@ -247,7 +284,40 @@ static void place(void *bp, size_t asize) {
  * <Are there any preconditions or postconditions?>
  */
 static void *coalesce(void *bp) {
-    // TODO: improve this function
+    size_t prevBlock = GET_ALLOC(HDRP(PREV_BLKP(bp)));
+    size_t nextBlock = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
+
+    if(prevBlock == 0x0 && nextBlock == 0x0){
+        size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
+        size_t sizePre = GET_SIZE(bp);
+        size_t sizePost = GET_SIZE(NEXT_BLKP(bp));
+        size_t totalSize = sizeCur + sizePre +sizePost + 32;
+
+        //coalesce with pre
+        PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
+        return PREV_BLKP(bp);
+    }
+    else if(prevBlock == 0x0){
+        size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
+        size_t sizePre = GET_SIZE(bp);
+        size_t totalSize = sizeCur + sizePre + 16;
+
+        PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
+        PUT(FTRP(bp), PACK(totalSize, 0));
+        return PREV_BLKP(bp);
+    }
+    else if(nextBlock == 0x0){
+        size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
+        size_t sizePost = GET_SIZE(NEXT_BLKP(bp));
+        size_t totalSize = sizeCur +sizePost + 16;
+
+        PUT(HDRP(bp), PACK(totalSize, 0));
+        PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
+        return bp;
+    }
+
+
 
     // Going to have helper functions static void *coalescePrev(void *current, void *prev)
     // Helper function 2: static void *coalesceNext(void *current, void *next)
