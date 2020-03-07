@@ -120,17 +120,9 @@ int mm_init(void) {
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
-    printf("get to init\n");
-
-    printf("Checking heap at the beginning of init\n");
-    check_heap(__LINE__);
-
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
-    printf("printing heap in init\n");
-    print_heap();
-    check_heap(__LINE__);
     return 0;
 }
 
@@ -144,7 +136,6 @@ void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;
-    check_heap(__LINE__);
 
     /* Ignore spurious requests */
     if (size <= 0)
@@ -158,21 +149,17 @@ void *mm_malloc(size_t size) {
         asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     }
 
-    check_heap(__LINE__);
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
         return bp;
     }
-    check_heap(__LINE__);
     /* No fit found. Get more memory and place the block */
     extendsize = max(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize / WSIZE)) == NULL)
         return NULL;
 
-    check_heap(__LINE__);
     place(bp, asize);
-    check_heap(__LINE__);
     return bp;
 }
 
@@ -199,13 +186,10 @@ void mm_free(void *bp) {
 
     size_t blockSize = GET_SIZE(curHdr);
 
-    check_heap(__LINE__);
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
 
-    check_heap(__LINE__);
     coalesce(bp);
-    check_heap(__LINE__);
 
 
     // If GET_ALLOC of that pointer is 0, we can just return and print a message out
@@ -258,22 +242,14 @@ static void place(void *bp, size_t asize) {
     size_t curSize = GET_SIZE(HDRP(bp));
 
     if ((curSize - asize) >= DSIZE) {
-        printf("print heap when splitting\n");
-        print_heap();
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        printf("print heap after splitting\n");
-        print_heap();
     }else {
-        printf("print heap when no splitting\n");
-        print_heap();
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
-        printf("print heap after no splitting\n");
-        print_heap();
     }
 
 
