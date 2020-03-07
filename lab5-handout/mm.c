@@ -85,6 +85,12 @@ team_t team = {
 #define NEXT_BLKP(bp)  (PADD(bp, GET_SIZE(HDRP(bp))))
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
+/* single word (4) or double word (8) alignment */
+#define ALIGNMENT 8
+
+/* rounds up to the nearest multiple of ALIGNMENT */
+#define ALIGN(p) (((size_t)(p) + (ALIGNMENT-1)) & ~0x7
+
 /* Global variables */
 
 // Pointer to first block
@@ -145,12 +151,15 @@ void *mm_malloc(size_t size) {
         return NULL;
 
     /* Adjust block size to include overhead and alignment reqs. */
-    if (size <= DSIZE) {
-        asize = DSIZE + OVERHEAD;
-    } else {
-        /* Add overhead and then round up to nearest multiple of double-word alignment */
-        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
-    }
+    // if (size <= DSIZE) {
+    //     asize = DSIZE + OVERHEAD;
+    // } else {
+    //     /* Add overhead and then round up to nearest multiple of double-word alignment */
+    //     asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
+    // }
+
+    asize = ALIGN(size + SIZE_T_SIZE);
+
     check_heap(__LINE__);
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
