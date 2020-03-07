@@ -145,6 +145,7 @@ void *mm_malloc(size_t size) {
         return NULL;
 
     /* Adjust block size to include overhead and alignment reqs. */
+    check_heap(__LINE__);
     if (size <= DSIZE) {
         asize = DSIZE + OVERHEAD;
     } else {
