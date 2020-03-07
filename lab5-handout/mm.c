@@ -139,8 +139,6 @@ void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;
-    check_heap(__LINE__);
-
     /* Ignore spurious requests */
     if (size <= 0)
         return NULL;
@@ -152,8 +150,6 @@ void *mm_malloc(size_t size) {
         /* Add overhead and then round up to nearest multiple of double-word alignment */
         asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
     }
-
-    check_heap(__LINE__);
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
@@ -252,7 +248,7 @@ static void place(void *bp, size_t asize) {
 
     size_t curSize = GET_SIZE(HDRP(bp));
 
-    if ((curSize - asize) >= DSIZE+OVERHEAD) {
+    if ((curSize - asize) >= DSIZE) {
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         char *nextBp = NEXT_BLKP(bp);
