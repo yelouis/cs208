@@ -109,6 +109,8 @@ static size_t max(size_t x, size_t y);
  * <Are there any preconditions or postconditions?>
  */
 int mm_init(void) {
+    printf("Checking heap at the beginning of init\n");
+    check_heap(__LINE__);
     /* create the initial empty heap */
     if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
