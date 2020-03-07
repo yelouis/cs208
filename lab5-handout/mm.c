@@ -188,14 +188,14 @@ void mm_free(void *bp) {
     if(GET_ALLOC(curHdr) == 0x0){
         printf("The block is already free!");
         return;
-    }   
+    }
 
     size_t blockSize = GET_SIZE(curHdr);
 
     check_heap(__LINE__);
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
-    
+
     check_heap(__LINE__);
     coalesce(bp);
     check_heap(__LINE__);
@@ -247,32 +247,46 @@ void *mm_realloc(void *ptr, size_t size) {
  * Postcondition: Placed block has an allocated tag
  */
 static void place(void *bp, size_t asize) {
-    
-    char *curHdr = HDRP(bp);
-    char *curFtr = FTRP(bp);
-    size_t totalFreeSize = GET_SIZE(curHdr);
 
-    //check if slitting is necessary
-    if (totalFreeSize == asize){
-        check_heap(__LINE__);
-        PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-        PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-        check_heap(__LINE__);
-        return;
+    size_t curSize = GET_SIZE(HDRP(bp));
+
+    if ((curSize - asize) >= (DSIZE + OVERHEAD)) {
+        PUT(HDRP(bp), PACK(asize, 1));
+        PUT(FTRP(bp), PACK(asize, 1));
+        nextBp = NEXT_BLKP(bp);
+        PUT(HDRP(nextBp), PACK(curSize-asize, 0));
+        PUT(FTRP(nextBp), PACK(curSize-asize, 0));
+    }else {
+        PUT(HDRP(bp), PACK(curSize, 1));
+        PUT(FTRP(bp), PACK(curSize, 1));
     }
 
-    size_t leftOverSize = totalFreeSize - asize;
 
-    //header and footer of asize block
-    check_heap(__LINE__);
-    PUT(curHdr, PACK(asize - 16, 1));
-    PUT(PADD(curHdr, asize - 8), PACK(asize-16,1));
-
-    //header and footer of leftover space
-    PUT(PADD(curHdr, asize), PACK(leftOverSize, 0));
-    PUT(curFtr, PACK(leftOverSize, 0));
-    check_heap(__LINE__);
-    return;
+    // char *curHdr = HDRP(bp);
+    // char *curFtr = FTRP(bp);
+    // size_t totalFreeSize = GET_SIZE(curHdr);
+    //
+    // //check if slitting is necessary
+    // if (totalFreeSize == asize){
+    //     check_heap(__LINE__);
+    //     PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+    //     PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
+    //     check_heap(__LINE__);
+    //     return;
+    // }
+    //
+    // size_t leftOverSize = totalFreeSize - asize;
+    //
+    // //header and footer of asize block
+    // check_heap(__LINE__);
+    // PUT(curHdr, PACK(asize - 16, 1));
+    // PUT(PADD(curHdr, asize - 8), PACK(asize-16,1));
+    //
+    // //header and footer of leftover space
+    // PUT(PADD(curHdr, asize), PACK(leftOverSize, 0));
+    // PUT(curFtr, PACK(leftOverSize, 0));
+    // check_heap(__LINE__);
+    // return;
 
     // freeSize = GET_SIZE(HDRP(bp))
     // leftoverSpace = freeSize - asize
@@ -283,7 +297,7 @@ static void place(void *bp, size_t asize) {
 
     // REPLACE THIS
     // currently does no splitting, just allocates the entire free block
-    
+
 }
 
 /*
