@@ -257,7 +257,7 @@ static void place(void *bp, size_t asize) {
 
     size_t curSize = GET_SIZE(HDRP(bp));
 
-    if ((curSize - asize) >= DSIZE+OVERHEAD) {
+    if ((curSize - asize) >= DSIZE) {
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         char *nextBp = NEXT_BLKP(bp);
