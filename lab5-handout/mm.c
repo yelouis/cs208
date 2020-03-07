@@ -126,6 +126,7 @@ int mm_init(void) {
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
     print_heap();
+    check_heap(__LINE__);
     return 0;
 }
 
@@ -139,13 +140,13 @@ void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;
+    check_heap(__LINE__);
 
     /* Ignore spurious requests */
     if (size <= 0)
         return NULL;
 
     /* Adjust block size to include overhead and alignment reqs. */
-    check_heap(__LINE__);
     if (size <= DSIZE) {
         asize = DSIZE + OVERHEAD;
     } else {
