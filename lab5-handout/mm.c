@@ -91,10 +91,14 @@ team_t team = {
 /* rounds up to the nearest multiple of ALIGNMENT */
 #define ALIGN(p) (((size_t)(p) + (ALIGNMENT-1)) & ~0x7
 
+#define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
+
 /* Global variables */
 
 // Pointer to first block
 static void *heap_start = NULL;
+
+
 
 /* Function prototypes for internal helper routines */
 
