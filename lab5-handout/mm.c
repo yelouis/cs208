@@ -90,8 +90,6 @@ team_t team = {
 // Pointer to first block
 static void *heap_start = NULL;
 
-
-
 /* Function prototypes for internal helper routines */
 
 static bool check_heap(int lineno);
@@ -317,16 +315,19 @@ static void *coalesce(void *bp) {
     if(!prevBlock && !nextBlock){
       return bp;
     }else if(prevBlock && !nextBlock){
+      // Coalesce with next block
       size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
       PUT(HDRP(bp), PACK(size, 0));
       PUT(FTRP(bp), PACK(size,0));
       return(bp);
     }else if(!prevBlock && nextBlock){
+      // Coalesce with prev block
       size += GET_SIZE(HDRP(PREV_BLKP(bp)));
       PUT(FTRP(bp), PACK(size, 0));
       PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
       return(PREV_BLKP(bp));
     }else{
+      // Coalesce with both
       size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
       PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
       PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
