@@ -309,6 +309,7 @@ static void place(void *bp, size_t asize) {
  */
 static void *coalesce(void *bp) {
     size_t prevBlock = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+    printf("Printing heap now\n", );
     print_heap();
     size_t nextBlock = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
