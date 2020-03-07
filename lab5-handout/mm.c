@@ -109,8 +109,6 @@ static size_t max(size_t x, size_t y);
  * <Are there any preconditions or postconditions?>
  */
 int mm_init(void) {
-    printf("Checking heap at the beginning of init\n");
-    check_heap(__LINE__);
     /* create the initial empty heap */
     if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
@@ -123,6 +121,9 @@ int mm_init(void) {
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
     printf("get to init\n");
+
+    printf("Checking heap at the beginning of init\n");
+    check_heap(__LINE__);
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
