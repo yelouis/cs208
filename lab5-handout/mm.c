@@ -254,12 +254,10 @@ static void place(void *bp, size_t asize) {
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        printf("In the place function\n");
         check_heap(__LINE__);
     }else {
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
-        printf("In the place function\n");
         check_heap(__LINE__);
     }
 
