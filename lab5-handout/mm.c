@@ -122,14 +122,9 @@ int mm_init(void) {
 
     printf("get to init\n");
 
-    printf("Checking heap at the beginning of init\n");
-    check_heap(__LINE__);
-
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
-    printf("printing heap in init\n");
-    print_heap();
     check_heap(__LINE__);
     return 0;
 }
@@ -315,44 +310,30 @@ static void place(void *bp, size_t asize) {
  */
 static void *coalesce(void *bp) {
     size_t prevBlock = GET_ALLOC(FTRP(PREV_BLKP(bp)));
-    printf("%zu Previous block alloction\n", prevBlock);
-    printf("Printing heap now\n");
-    print_heap();
     size_t nextBlock = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
     if(prevBlock && nextBlock){
-      printf("Printing heap after coalesce with nothing\n");
-      print_heap();
       return bp;
     }else if(!prevBlock && nextBlock){
       // Coalesce with next block
       size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
       PUT(HDRP(bp), PACK(size, 0));
       PUT(FTRP(bp), PACK(size,0));
-      printf("Printing heap after coalesce with nextBlock\n");
-      print_heap();
       return(bp);
     }else if(prevBlock && !nextBlock){
       // Coalesce with prev block
       size += GET_SIZE(HDRP(PREV_BLKP(bp)));
       PUT(FTRP(bp), PACK(size, 0));
       PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
-      printf("Printing heap after coalesce with prevBlock\n");
-      print_heap();
       return(PREV_BLKP(bp));
     }else{
       // Coalesce with both
       size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
       PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
       PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
-      printf("Printing heap after coalesce with both\n");
-      print_heap();
       return(PREV_BLKP(bp));
     }
-
-    printf("Printing heap after coalesce\n");
-    print_heap();
 
     // if(prevBlock == 0x0 && nextBlock == 0x0){
     //     size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
