@@ -298,6 +298,7 @@ static void *coalesce(void *bp) {
       // remove the block from free list
     	PUT(HDRP(bp), PACK(size, 0));
     	PUT(FTRP(bp), PACK(size, 0));
+      return(bp);
     }
 
       /* case 3 */
@@ -310,6 +311,7 @@ static void *coalesce(void *bp) {
       // remove the block from free list
       PUT(HDRP(bp), PACK(size, 0));
       PUT(FTRP(bp), PACK(size, 0));
+      return(PREV_BLKP(bp));
     }
 
       /* case 4 */
@@ -325,6 +327,7 @@ static void *coalesce(void *bp) {
     	bp = PREV_BLKP(bp);
     	PUT(HDRP(bp), PACK(size, 0));
     	PUT(FTRP(bp), PACK(size, 0));
+      return(PREV_BLKP(bp));
     }
 
     // Case 1: no merging
