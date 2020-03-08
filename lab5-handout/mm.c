@@ -103,6 +103,7 @@ team_t team = {
 
 // Pointer to first block
 static void *heap_start = NULL;
+static char *free_listp = NULL;
 
 /* Function prototypes for internal helper routines */
 
@@ -133,6 +134,9 @@ int mm_init(void) {
     PUT(PADD(heap_start, WSIZE + DSIZE), PACK(0, 1));   /* epilogue header */
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
+
+    //Making a free_list to keep track of all the free blocks
+    free_listp = heap_start;
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
@@ -233,21 +237,41 @@ void *mm_realloc(void *ptr, size_t size) {
  * Postcondition: Placed block has an allocated tag
  */
 static void place(void *bp, size_t asize) {
+  size_t curSize = GET_SIZE(HDRP(bp));
 
-    size_t curSize = GET_SIZE(HDRP(bp));
+  /* difference is at least 24 bytes */
+  if ((curSize - asize) >= (24)) {
+      PUT(HDRP(bp), PACK(asize, 1));
+      PUT(FTRP(bp), PACK(asize, 1));
+      rmvFromFree(bp);
+      bp = NEXT_BLKP(bp);
+      PUT(HDRP(bp), PACK(curSize-asize, 0));
+      PUT(FTRP(bp), PACK(curSize-asize, 0));
+      coalesce(bp);
+  }
+  /* not enough space for free block, don't split */
+  else {
+      PUT(HDRP(bp), PACK(curSize, 1));
+      PUT(FTRP(bp), PACK(curSize, 1));
+      rmvFromFree(bp);
+  }
 
-    // Uses part of the block
-    if ((curSize - asize) >= DSIZE) {
-        PUT(HDRP(bp), PACK(asize, 1));
-        PUT(FTRP(bp), PACK(asize, 1));
-        char *nextBp = NEXT_BLKP(bp);
-        PUT(HDRP(nextBp), PACK(curSize-asize, 0));
-        PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-    }else {
-      // Uses entire block
-        PUT(HDRP(bp), PACK(curSize, 1));
-        PUT(FTRP(bp), PACK(curSize, 1));
-    }
+
+
+    // size_t curSize = GET_SIZE(HDRP(bp));
+    //
+    // // Uses part of the block
+    // if ((curSize - asize) >= DSIZE) {
+    //     PUT(HDRP(bp), PACK(asize, 1));
+    //     PUT(FTRP(bp), PACK(asize, 1));
+    //     char *nextBp = NEXT_BLKP(bp);
+    //     PUT(HDRP(nextBp), PACK(curSize-asize, 0));
+    //     PUT(FTRP(nextBp), PACK(curSize-asize, 0));
+    // }else {
+    //   // Uses entire block
+    //     PUT(HDRP(bp), PACK(curSize, 1));
+    //     PUT(FTRP(bp), PACK(curSize, 1));
+    // }
 
 }
 
@@ -263,32 +287,105 @@ static void *coalesce(void *bp) {
     size_t nextBlock = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
     size_t size = GET_SIZE(HDRP(bp));
 
-    if(prevBlock && nextBlock){
-
-      return bp;
-    }else if(prevBlock && !nextBlock){
+      /* case 2 */
       // Coalesce with next block
-      size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
-      PUT(HDRP(bp), PACK(size, 0));
-      PUT(FTRP(bp), PACK(size,0));
-
-      return(bp);
-    }else if(!prevBlock && nextBlock){
-      // Coalesce with prev block
-      size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-      PUT(FTRP(bp), PACK(size, 0));
-      PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
-
-      return(PREV_BLKP(bp));
-    }else{
-      // Coalesce with both
-      size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
-      PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
-      PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
-
-      return(PREV_BLKP(bp));
+    if (prevBlock && !nextBlock)
+    {
+    	size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+    	rmvFromFree(NEXT_BLKP(bp));
+      // remove the block from free list
+    	PUT(HDRP(bp), PACK(size, 0));
+    	PUT(FTRP(bp), PACK(size, 0));
     }
 
+      /* case 3 */
+      // Coalesce with next block
+    else if (!prevBlock && nextBlock)
+    {
+      size += GET_SIZE(HDRP(PREV_BLKP(bp)));
+      bp = PREV_BLKP(bp);
+      rmvFromFree(bp);
+      // remove the block from free list
+      PUT(HDRP(bp), PACK(size, 0));
+      PUT(FTRP(bp), PACK(size, 0));
+    }
+
+      /* case 4 */
+      // Coalesce with both
+    else if (!prevBlock && !nextBlock)
+    {
+    	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+
+    	rmvFromFree(PREV_BLKP(bp));
+      // remove the block from free list
+    	rmvFromFree(NEXT_BLKP(bp));
+      // remove the block from free list
+    	bp = PREV_BLKP(bp);
+    	PUT(HDRP(bp), PACK(size, 0));
+    	PUT(FTRP(bp), PACK(size, 0));
+    }
+
+    // Case 1: no merging
+    insertFront(bp);
+    return bp;
+
+    // if(prevBlock && nextBlock){
+    //
+    //   return bp;
+    // }else if(prevBlock && !nextBlock){
+    //   // Coalesce with next block
+    //   size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+    //   PUT(HDRP(bp), PACK(size, 0));
+    //   PUT(FTRP(bp), PACK(size,0));
+    //
+    //   return(bp);
+    // }else if(!prevBlock && nextBlock){
+    //   // Coalesce with prev block
+    //   size += GET_SIZE(HDRP(PREV_BLKP(bp)));
+    //   PUT(FTRP(bp), PACK(size, 0));
+    //   PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+    //
+    //   return(PREV_BLKP(bp));
+    // }else{
+    //   // Coalesce with both
+    //   size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(FTRP(NEXT_BLKP(bp)));
+    //   PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+    //   PUT(FTRP(NEXT_BLKP(bp)), PACK(size, 0));
+    //
+    //   return(PREV_BLKP(bp));
+    // }
+
+}
+
+/*
+ * rmvFromFree - removes a block from the free list once it has been
+ * allocated and no longer free to use
+ */
+static void rmvFromFree(void *bp)
+{
+
+    if (PREV_FREE_BLKP(bp)) /* check if bp is the first block in list */
+        NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+    else
+        free_listp = NEXT_FREE_BLKP(bp);
+
+    PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+
+    return;
+}
+
+
+/*
+ * insertFront - inserts free block bp at the front of the free_list
+ * FILO (first in last out) free linked list, last node points to self
+ */
+static void insertFront(void *bp)
+{
+    NEXT_FREE_BLKP(bp) = free_listp;
+    PREV_FREE_BLKP(free_listp) = bp;
+    PREV_FREE_BLKP(bp) = NULL;
+    free_listp = bp;
+	return;
 }
 
 
@@ -296,13 +393,23 @@ static void *coalesce(void *bp) {
  * find_fit - Find a fit for a block with asize bytes
  */
 static void *find_fit(size_t asize) {
-    /* search from the start of the free list to the end */
-    for (char *cur_block = heap_start; GET_SIZE(HDRP(cur_block)) > 0; cur_block = NEXT_BLKP(cur_block)) {
-        if (!GET_ALLOC(HDRP(cur_block)) && (asize <= GET_SIZE(HDRP(cur_block))))
-            return cur_block;
-    }
+  void *bp;
 
-    return NULL;  /* no fit found */
+  /* traverse free list */
+  for (bp = free_listp; GET_ALLOC(HDRP(bp)) == 0; bp = NEXT_FREE_BLKP(bp)) {
+      if (asize <= (size_t)GET_SIZE(HDRP(bp)))
+        return bp;
+  }
+
+  return NULL; // No fit
+
+    // /* search from the start of the free list to the end */
+    // for (char *cur_block = heap_start; GET_SIZE(HDRP(cur_block)) > 0; cur_block = NEXT_BLKP(cur_block)) {
+    //     if (!GET_ALLOC(HDRP(cur_block)) && (asize <= GET_SIZE(HDRP(cur_block))))
+    //         return cur_block;
+    // }
+    //
+    // return NULL;  /* no fit found */
 }
 
 /*
