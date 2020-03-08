@@ -24,6 +24,16 @@
  * eliminate edge conditions during coalescing.
  */
 
+
+
+ /*
+ *  Structure for explicit.
+ *  Free block
+ *  [ HEADER | PREV | NEXT |    PAYLOAD    | FOOTER ]
+ *  Allocated block
+ *  [ HEADER |   PAYLOAD    | FOOTER ]
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -84,6 +94,10 @@ team_t team = {
 /* Given block ptr bp, compute address of next and previous blocks */
 #define NEXT_BLKP(bp)  (PADD(bp, GET_SIZE(HDRP(bp))))
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
+
+/* Get the next free block given pointer */
+#define NEXT_FREE_BLKP(bp)(*(void **)(bp + DSIZE))
+#define PREV_FREE_BLKP(bp)(*(void **)(bp))
 
 /* Global variables */
 
@@ -190,25 +204,6 @@ void mm_free(void *bp) {
     PUT(curFtr, PACK(blockSize, 0x0));
 
     coalesce(bp);
-
-
-    // If GET_ALLOC of that pointer is 0, we can just return and print a message out
-    // to indicate that the block was already freed.
-
-
-    // GET_SIZE(p) << 1 and then use PUT to put the result of that into the address
-    // to change the header
-    // PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 0x0))
-    // This will depend on whether GET_SIZE and GET_ALLOC returns something in 8 bytes
-    // or not.
-
-    // Use get size to get to footer so that we can set the footer valid tag to 0.
-    // PUT(FTRP(bp), GET_SIZE(bp) << 1)
-    // PUT(FTRP(bp), PACK(GET_SIZE(bp), 0b0))
-
-
-    // Coalesce!!!!!
-
 }
 
 /*
@@ -241,6 +236,7 @@ static void place(void *bp, size_t asize) {
 
     size_t curSize = GET_SIZE(HDRP(bp));
 
+    // Uses part of the block
     if ((curSize - asize) >= DSIZE) {
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
@@ -248,46 +244,10 @@ static void place(void *bp, size_t asize) {
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
     }else {
+      // Uses entire block
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
     }
-
-
-    // char *curHdr = HDRP(bp);
-    // char *curFtr = FTRP(bp);
-    // size_t totalFreeSize = GET_SIZE(curHdr);
-    //
-    // //check if slitting is necessary
-    // if (totalFreeSize == asize){
-    //     check_heap(__LINE__);
-    //     PUT(HDRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-    //     PUT(FTRP(bp), PACK(GET_SIZE(HDRP(bp)), 1));
-    //     check_heap(__LINE__);
-    //     return;
-    // }
-    //
-    // size_t leftOverSize = totalFreeSize - asize;
-    //
-    // //header and footer of asize block
-    // check_heap(__LINE__);
-    // PUT(curHdr, PACK(asize - 16, 1));
-    // PUT(PADD(curHdr, asize - 8), PACK(asize-16,1));
-    //
-    // //header and footer of leftover space
-    // PUT(PADD(curHdr, asize), PACK(leftOverSize, 0));
-    // PUT(curFtr, PACK(leftOverSize, 0));
-    // check_heap(__LINE__);
-    // return;
-
-    // freeSize = GET_SIZE(HDRP(bp))
-    // leftoverSpace = freeSize - asize
-    // PUT(HDRP(bp), PACK(asize-16, 1))               // Set the header to asize without OVERHEAD
-    // PUT((HDRP(bp) + asize - 8), PACK(asize-16,1))  // Set the footer to asize without OVERHEAD. Have to manually find footer
-    // PUT((HDRP(bp)+asize), PACK(asize-16, 0))       // Set the header of the leftoverSpace
-    // PUT(FTRP(bp), PACK(leftoverSpace, 0))          // Set the footer of the leftoverSpace
-
-    // REPLACE THIS
-    // currently does no splitting, just allocates the entire free block
 
 }
 
@@ -328,56 +288,6 @@ static void *coalesce(void *bp) {
 
       return(PREV_BLKP(bp));
     }
-
-    // if(prevBlock == 0x0 && nextBlock == 0x0){
-    //     size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
-    //     size_t sizePre = GET_SIZE(bp);
-    //     size_t sizePost = GET_SIZE(NEXT_BLKP(bp));
-    //     size_t totalSize = sizeCur + sizePre +sizePost + 32;
-    //
-    //     //coalesce with pre
-    //     check_heap(__LINE__);
-    //     PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
-    //     PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
-    //     check_heap(__LINE__);
-    //     return PREV_BLKP(bp);
-    // }
-    // else if(prevBlock == 0x0){
-    //     size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
-    //     size_t sizePre = GET_SIZE(bp);
-    //     size_t totalSize = sizeCur + sizePre + 16;
-    //
-    //     check_heap(__LINE__);
-    //     PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0));
-    //     PUT(FTRP(bp), PACK(totalSize, 0));
-    //     check_heap(__LINE__);
-    //     return PREV_BLKP(bp);
-    // }
-    // else if(nextBlock == 0x0){
-    //     size_t sizeCur = GET_SIZE(PREV_BLKP(bp));
-    //     size_t sizePost = GET_SIZE(NEXT_BLKP(bp));
-    //     size_t totalSize = sizeCur +sizePost + 16;
-    //
-    //     check_heap(__LINE__);
-    //     PUT(HDRP(bp), PACK(totalSize, 0));
-    //     PUT(FTRP(NEXT_BLKP(bp)), PACK(totalSize, 0));
-    //     check_heap(__LINE__);
-    //     return bp;
-    // }
-
-
-
-    // Going to have helper functions static void *coalescePrev(void *current, void *prev)
-    // Helper function 2: static void *coalesceNext(void *current, void *next)
-
-    // coalescePrev:
-    // If both current and prev are not allocated.
-    // !GET_ALLOC(PREV_BLKP(bp)) & !GET_ALLOC(bp):
-    // size1 = GET_SIZE(PREV_BLKP(bp))
-    // size2 = GET_SIZE(bp)
-    // totalSize = size1 + size2 + 16
-    // PUT(HDRP(PREV_BLKP(bp)), PACK(totalSize, 0))
-    // PUT(FTRP(bp), PACK(totalSize, 0))
 
 }
 
