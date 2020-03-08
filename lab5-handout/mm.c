@@ -114,6 +114,8 @@ static bool check_block(int lineno, void *bp);
 static void *extend_heap(size_t size);
 static void *find_fit(size_t asize);
 static void *coalesce(void *bp);
+static void rmvFromFree(void *bp);
+static void insertFront(void *bp);
 static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
 
@@ -395,7 +397,7 @@ static void insertFront(void *bp)
 static void *find_fit(size_t asize) {
   void *bp;
 
-  /* traverse free list */
+  // traverse free list
   for (bp = free_listp; GET_ALLOC(HDRP(bp)) == 0; bp = NEXT_FREE_BLKP(bp)) {
       if (asize <= (size_t)GET_SIZE(HDRP(bp)))
         return bp;
