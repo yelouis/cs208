@@ -337,7 +337,6 @@ static void *coalesce(void *bp) {
         printf("before, coalesce with prev\n");
         print_heap();
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-        rmvFromFree(bp);
         bp = PREV_BLKP(bp);
         // remove the block from free list
         PUT(HDRP(bp), PACK(size, 0));
