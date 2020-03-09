@@ -133,9 +133,6 @@ int mm_init(void) {
         return -1;
 
     //Making a free_list to keep track of all the free blocks
-    //free_listp = heap_start;
-
-    //Making a free_list to keep track of all the free blocks
     free_listp = heap_start;
 
     PUT(heap_start, 0);                        /* alignment padding */
@@ -319,11 +316,12 @@ static void *coalesce(void *bp) {
     {
         printf("before, coalesce with next\n");
         print_heap();
-    	size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
-    	rmvFromFree(NEXT_BLKP(bp));
-      // remove the block from free list
-    	PUT(HDRP(bp), PACK(size, 0));
-    	PUT(FTRP(bp), PACK(size, 0));
+      	size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
+      	rmvFromFree(NEXT_BLKP(bp));
+        // remove the block from free list
+      	PUT(HDRP(bp), PACK(size, 0));
+      	PUT(FTRP(bp), PACK(size, 0));
+        insertFront(bp);
         printf("before, coalesce with next\n");
         print_heap();
         return(bp);
@@ -336,8 +334,8 @@ static void *coalesce(void *bp) {
         printf("before, coalesce with prev\n");
         print_heap();
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-        bp = PREV_BLKP(bp);
         rmvFromFree(bp);
+        bp = PREV_BLKP(bp);
         // remove the block from free list
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
@@ -352,15 +350,15 @@ static void *coalesce(void *bp) {
     {
         printf("before, coalesce with both\n");
         print_heap();
-    	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+      	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
 
-    	rmvFromFree(PREV_BLKP(bp));
-      // remove the block from free list
-    	rmvFromFree(NEXT_BLKP(bp));
-      // remove the block from free list
-    	bp = PREV_BLKP(bp);
-    	PUT(HDRP(bp), PACK(size, 0));
-    	PUT(FTRP(bp), PACK(size, 0));
+      	rmvFromFree(PREV_BLKP(bp));
+        // remove the block from free list
+      	rmvFromFree(NEXT_BLKP(bp));
+        // remove the block from free list
+      	bp = PREV_BLKP(bp);
+      	PUT(HDRP(bp), PACK(size, 0));
+      	PUT(FTRP(bp), PACK(size, 0));
         printf("after, coalesce with both\n");
         print_heap();
         return(PREV_BLKP(bp));
