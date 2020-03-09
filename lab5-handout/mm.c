@@ -132,6 +132,9 @@ int mm_init(void) {
     if ((heap_start = mem_sbrk(6 * WSIZE)) == NULL)
         return -1;
 
+    //Making a free_list to keep track of all the free blocks
+    free_listp = heap_start;
+
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
     PUT(PADD(heap_start, 2*WSIZE), PACK(0,0));
@@ -139,10 +142,9 @@ int mm_init(void) {
     PUT(PADD(heap_start, 4*WSIZE), PACK(OVERHEAD, 1));  /* prologue footer */
     PUT(PADD(heap_start, 5*WSIZE), PACK(0, 1));   /* epilogue header */
 
-    heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
-    //Making a free_list to keep track of all the free blocks
-    free_listp = heap_start;
+
+    heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
