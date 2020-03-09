@@ -352,9 +352,8 @@ static void *coalesce(void *bp) {
         print_heap();
       	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
 
-      	rmvFromFree(PREV_BLKP(bp));
+        rmvFromFree(NEXT_BLKP(bp));
         // remove the block from free list
-      	rmvFromFree(NEXT_BLKP(bp));
         // remove the block from free list
       	bp = PREV_BLKP(bp);
       	PUT(HDRP(bp), PACK(size, 0));
