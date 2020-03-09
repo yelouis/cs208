@@ -75,6 +75,7 @@ team_t team = {
  * carefully about why these work the way they do
  */
 
+#define MAX(x, y) ((x) > (y)? (x) : (y))
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
 
@@ -138,11 +139,11 @@ int mm_init(void) {
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, WSIZE), PACK(MINIMUM, 1));  /* prologue header */
 
-    PUT(heap_listp + (2*WSIZE), 0); /* Previous pointer */
-    PUT(heap_listp + (3*WSIZE), 0);    /* Next Pointer */
+    PUT(heap_start + (2*WSIZE), 0); /* Previous pointer */
+    PUT(heap_start + (3*WSIZE), 0);    /* Next Pointer */
 
-    PUT(heap_listp + MINIMUM, PACK(MINIMUM, 1));      /* Prologue footer */
-    PUT(heap_listp + MINIMUM + WSIZE, PACK(0, 1));    /* Epilogue Header */
+    PUT(heap_start + MINIMUM, PACK(MINIMUM, 1));      /* Prologue footer */
+    PUT(heap_start + MINIMUM + WSIZE, PACK(0, 1));    /* Epilogue Header */
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
