@@ -134,8 +134,10 @@ int mm_init(void) {
 
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
-    PUT(PADD(heap_start, DSIZE), PACK(OVERHEAD, 1));  /* prologue footer */
-    PUT(PADD(heap_start, WSIZE + DSIZE), PACK(0, 1));   /* epilogue header */
+    PUT(PADD(heap_start, 2*WSIZE), 0)
+    PUT(PADD(heap_start, 3*WSIZE), 0)
+    PUT(PADD(heap_start, 4*SIZE), PACK(OVERHEAD, 1));  /* prologue footer */
+    PUT(PADD(heap_start, 5*WSIZE), PACK(0, 1));   /* epilogue header */
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
