@@ -129,7 +129,7 @@ static size_t max(size_t x, size_t y);
  */
 int mm_init(void) {
     /* create the initial empty heap */
-    if ((heap_start = mem_sbrk(6 * WSIZE)) == NULL)
+    if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
 
     //Making a free_list to keep track of all the free blocks
@@ -137,8 +137,6 @@ int mm_init(void) {
 
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
-    PUT(PADD(heap_start, 2*WSIZE), PACK(0,0));
-    PUT(PADD(heap_start, 3*WSIZE), PACK(0,0));
     PUT(PADD(heap_start, 4*WSIZE), PACK(OVERHEAD, 1));  /* prologue footer */
     PUT(PADD(heap_start, 5*WSIZE), PACK(0, 1));   /* epilogue header */
 
