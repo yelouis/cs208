@@ -129,23 +129,21 @@ static size_t max(size_t x, size_t y);
  */
 int mm_init(void) {
     /* create the initial empty heap */
-    if ((heap_start = mem_sbrk(6 * WSIZE)) == NULL)
+    if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
 
     //Making a free_list to keep track of all the free blocks
     //free_listp = heap_start;
 
+    //Making a free_list to keep track of all the free blocks
+    free_listp = heap_start;
+
     PUT(heap_start, 0);                        /* alignment padding */
-    PUT(PADD(heap_start, WSIZE), 0);              /* Free PREV LINKNODE */
-    PUT(PADD(heap_start, 2*WSIZE), 0);              /* Free NEXT LINKNODE */
     PUT(PADD(heap_start, 3*WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
     PUT(PADD(heap_start, 4*WSIZE), PACK(OVERHEAD, 1));  /* prologue footer */
     PUT(PADD(heap_start, 5*WSIZE), PACK(0, 1));   /* epilogue header */
 
-    //Making a free_list to keep track of all the free blocks
-    free_listp = PADD(heap_start, WSIZE);
-    
-    heap_start = PADD(heap_start, 4*WSIZE); /* start the heap at the (size 0) payload of the prologue block */
+    heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
     printf("heap in init\n");
     print_heap();
@@ -351,7 +349,7 @@ static void *coalesce(void *bp) {
       /* case 4 */
       // Coalesce with both
     else if (!prevBlock && !nextBlock)
-    {   
+    {
         printf("before, coalesce with both\n");
         print_heap();
     	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
