@@ -66,8 +66,7 @@ team_t team = {
 #define DSIZE       16      /* doubleword size (bytes) */
 #define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
 #define OVERHEAD    16      /* overhead of header and footer (bytes) */
-#define ALIGNMENT 16
-#define MINIMUM   24
+#define OVERHEADEX  32      /* overhead of header and footer (bytes) of explicit */
 
 
 /* NOTE: feel free to replace these macros with helper functions and/or
@@ -77,8 +76,6 @@ team_t team = {
 
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
-
-#define ALIGN(p) (((size_t)(p) + (ALIGNMENT-1)) & ~0x7)
 
 /* Read and write a word at address p */
 #define GET(p)       (*(size_t *)(p))
@@ -132,22 +129,20 @@ static size_t max(size_t x, size_t y);
  */
 int mm_init(void) {
     /* create the initial empty heap */
-    if ((heap_start = mem_sbrk(2 * MINIMUM)) == NULL)
+    if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
-
-    PUT(heap_start, 0);                        /* alignment padding */
-    PUT(PADD(heap_start, WSIZE), PACK(MINIMUM, 1));  /* prologue header */
-
-    PUT(heap_listp + (2*WSIZE), 0); /* Previous pointer */
-    PUT(heap_listp + (3*WSIZE), 0);    /* Next Pointer */
-
-    PUT(heap_listp + MINIMUM, PACK(MINIMUM, 1));      /* Prologue footer */
-    PUT(heap_listp + MINIMUM + WSIZE, PACK(0, 1));    /* Epilogue Header */
-
-    heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
     //Making a free_list to keep track of all the free blocks
     free_listp = heap_start;
+
+    PUT(heap_start, 0);                        /* alignment padding */
+    PUT(PADD(heap_start, WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
+    PUT(PADD(heap_start, 2*WSIZE), PACK(OVERHEAD, 1));  /* prologue footer */
+    PUT(PADD(heap_start, 3*WSIZE), PACK(0, 1));   /* epilogue header */
+
+
+
+    heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
@@ -175,8 +170,12 @@ void *mm_malloc(size_t size) {
         return NULL;
 
     /* Adjust block size to include overhead and alignment reqs. */
-    asize = MAX(ALIGN(size) + DSIZE, MINIMUM);
-
+    if (size <= DSIZE) {
+        asize = DSIZE + OVERHEAD;
+    } else {
+        /* Add overhead and then round up to nearest multiple of double-word alignment */
+        asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
+    }
 
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
@@ -250,7 +249,7 @@ void *mm_realloc(void *ptr, size_t size) {
 static void place(void *bp, size_t asize) {
   size_t curSize = GET_SIZE(HDRP(bp));
 
-  if ((curSize - asize) >= MINIMUM) {
+  if ((curSize - asize) >= DSIZE) {
       PUT(HDRP(bp), PACK(asize, 1));
       PUT(FTRP(bp), PACK(asize, 1));
       rmvFromFree(bp);
