@@ -98,8 +98,8 @@ team_t team = {
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define NEXT_FREE_BLKP(bp)(*(void **)(bp + DSIZE))
-#define PREV_FREE_BLKP(bp)(*(void **)(bp))
+#define NEXT_FREE_BLKP(bp)  (*(char **)(PADD(bp, WSIZE)))
+#define PREV_FREE_BLKP(bp)  (*(char **)(bp))
 
 /* Global variables */
 
@@ -145,6 +145,10 @@ int mm_init(void) {
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
+
+    PUT(PADD(heap_start, DSIZE), PACK(0, 0));
+    PUT(PADD(heap_start, DSIZE+WSIZE), PACK(0, 0));
+
     return 0;
 }
 
@@ -243,7 +247,7 @@ void *mm_realloc(void *ptr, size_t size) {
 static void place(void *bp, size_t asize) {
   size_t curSize = GET_SIZE(HDRP(bp));
 
-  if ((curSize - asize) >= DSIZE {
+  if ((curSize - asize) >= DSIZE) {
       PUT(HDRP(bp), PACK(asize, 1));
       PUT(FTRP(bp), PACK(asize, 1));
       rmvFromFree(bp);
@@ -258,6 +262,8 @@ static void place(void *bp, size_t asize) {
       PUT(FTRP(bp), PACK(curSize, 1));
       rmvFromFree(bp);
   }
+
+}
 
 
 
@@ -276,7 +282,7 @@ static void place(void *bp, size_t asize) {
     //     PUT(FTRP(bp), PACK(curSize, 1));
     // }
 
-}
+
 
 /*
  * coalesce -- Boundary tag coalescing.
@@ -370,7 +376,7 @@ static void *coalesce(void *bp) {
 static void rmvFromFree(void *bp)
 {
 
-    if (PREV_FREE_BLKP(bp)) /* check if bp is the first block in list */
+    if (PREV_FREE_BLKP(bp)) /* check if bp is not the first block in list */
         NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
     else
         free_listp = NEXT_FREE_BLKP(bp);
