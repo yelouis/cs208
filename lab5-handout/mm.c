@@ -129,7 +129,7 @@ static size_t max(size_t x, size_t y);
  */
 int mm_init(void) {
     /* create the initial empty heap */
-    if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
+    if ((heap_start = mem_sbrk(6 * WSIZE)) == NULL)
         return -1;
 
     PUT(heap_start, 0);                        /* alignment padding */
