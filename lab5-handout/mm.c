@@ -148,8 +148,8 @@ int mm_init(void) {
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
 
-    PUT(PADD(heap_start, DSIZE), PACK(0, 0));
-    PUT(PADD(heap_start, DSIZE+WSIZE), PACK(0, 0));
+    // PUT(PADD(heap_start, DSIZE), PACK(0, 0));
+    // PUT(PADD(heap_start, DSIZE+WSIZE), PACK(0, 0));
 
     return 0;
 }
