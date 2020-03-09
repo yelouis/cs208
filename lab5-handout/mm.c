@@ -66,6 +66,8 @@ team_t team = {
 #define DSIZE       16      /* doubleword size (bytes) */
 #define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
 #define OVERHEAD    16      /* overhead of header and footer (bytes) */
+#define OVERHEADEX  32      /* overhead of header and footer (bytes) of explicit */
+
 
 /* NOTE: feel free to replace these macros with helper functions and/or
  * add new ones that will be useful for you. Just make sure you think
@@ -241,8 +243,7 @@ void *mm_realloc(void *ptr, size_t size) {
 static void place(void *bp, size_t asize) {
   size_t curSize = GET_SIZE(HDRP(bp));
 
-  /* difference is at least 24 bytes */
-  if ((curSize - asize) >= (24)) {
+  if ((curSize - asize) >= DSIZE {
       PUT(HDRP(bp), PACK(asize, 1));
       PUT(FTRP(bp), PACK(asize, 1));
       rmvFromFree(bp);
