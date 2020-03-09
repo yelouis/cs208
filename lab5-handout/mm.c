@@ -436,9 +436,9 @@ static void *extend_heap(size_t words) {
     size_t size;
 
     /* Allocate an even number of words to maintain alignment */
-    size = (words % 2) ? (words+1) * WSIZE : words * WSIZE;
-    if (size < MINIMUM)
-        size = MINIMUM;
+    size = words * WSIZE;
+    if (words % 2 == 1)
+        size += WSIZE;
     // printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
