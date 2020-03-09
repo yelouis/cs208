@@ -134,8 +134,8 @@ int mm_init(void) {
 
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
-    PUT(PADD(heap_start, 2*WSIZE), 0)
-    PUT(PADD(heap_start, 3*WSIZE), 0)
+    PUT(PADD(heap_start, 2*WSIZE), PACK(0,0))
+    PUT(PADD(heap_start, 3*WSIZE), PACK(0,0))
     PUT(PADD(heap_start, 4*SIZE), PACK(OVERHEAD, 1));  /* prologue footer */
     PUT(PADD(heap_start, 5*WSIZE), PACK(0, 1));   /* epilogue header */
 
