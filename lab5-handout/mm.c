@@ -416,6 +416,16 @@ static void rmvFromFree(void *bp)
  */
 static void insertFront(char *bp)
 {
+      /* If our free list has nothing, set it.  */
+    if (free_listp == NULL) {
+        PUT(bp, 0);
+        PUT(PADD(bp, 8), 0);
+        // NEXT_FREEP(ptr) = NULL;
+        // PREV_FREEP(ptr) = NULL;
+        free_listp = bp;
+        return;
+    }
+
     PUT(PADD(bp, 8), GET(free_listp));
     //NEXT_FREE_BLKP(bp) = free_listp;
     PUT(free_listp, GET(bp));
