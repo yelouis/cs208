@@ -345,13 +345,16 @@ static void *coalesce(void *bp) {
         //bp = PREV_BLKP(bp);
 
         rmvFromFree(PREV_BLKP(bp));                       /* remove the block from free list */
+        bp = PREV_BLKP(bp);
 
-        PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
+        PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
+
+        insertFront(bp);
         //printf("Coalesce with previous block\n");
         //print_heap();
         //printf("after Coalesce with previous block\n");
-        return PREV_BLKP(bp);
+        return bp;
       }
 
         /* case 4 */
