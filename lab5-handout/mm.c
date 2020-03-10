@@ -426,11 +426,11 @@ static void insertFront(char *bp)
         return;
     }
 
-    PUT(PADD(bp, 8), GET(free_listp));
+    PUTPOINT(PADD(bp, 8), free_listp);
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUT(free_listp, (*(size_t *) &bp));
+    PUTPOINT(free_listp, bp;
     //PREV_FREE_BLKP(free_listp) = bp;
-    PUT(bp, 0);
+    PUTPOINT(bp, NULL);
     //PREV_FREE_BLKP(bp) = NULL;
     free_listp = bp;
 	return;
@@ -445,7 +445,7 @@ static void *find_fit(size_t asize) {
 
   // traverse free list
   // while loop?
-  for (bp = free_listp; GET(bp) != 0; bp = NEXT_FREE_BLKP(bp)) {
+  for (bp = free_listp; GET(bp) != NULL; bp = NEXT_FREE_BLKP(bp)) {
         if (asize <= (size_t)GET_SIZE(HDRP(bp))){
             return bp;
         }
