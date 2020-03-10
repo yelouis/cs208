@@ -308,70 +308,46 @@ static void place(void *bp, size_t asize) {
  * <Are there any preconditions or postconditions?>
  */
 static void *coalesce(void *bp) {
-    size_t prevBlock = GET_ALLOC(FTRP(PREV_BLKP(bp)));
+        /* get tags of next and previous blocks */
+      size_t prev_alloc = GET_ALLOC(FTRP(PREV_BLKP(bp))) || PREV_BLKP(bp) == bp;
+      size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
 
-    size_t nextBlock = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
-    size_t size = GET_SIZE(HDRP(bp));
+      size_t size = GET_SIZE(HDRP(bp));
 
-      /* case 2 */
-      // Coalesce with next block
-    if (prevBlock && !nextBlock)
-    {
-        printf("before, coalesce with next\n");
-        print_heap();
-      	size += GET_SIZE(HDRP(NEXT_BLKP(bp)));
-      	rmvFromFree(NEXT_BLKP(bp));
-        // remove the block from free list
-      	PUT(HDRP(bp), PACK(size, 0));
-      	PUT(FTRP(bp), PACK(size, 0));
-        insertFront(bp);
-        printf("before, coalesce with next\n");
-        print_heap();
-        return(bp);
-    }
-
-      /* case 3 */
-      // Coalesce with prev block
-    else if (!prevBlock && nextBlock)
-    {
-        printf("before, coalesce with prev\n");
-        print_heap();
-        size += GET_SIZE(HDRP(PREV_BLKP(bp)));
-        bp = PREV_BLKP(bp);
-        // remove the block from free list
+        /* case 2 */
+      if (prev_alloc && !next_alloc)
+      {
+        size += GET_SIZE(HDRP(NEXT_BLKP(bp)));  /* add size of next free block */
+        rmv_from_free(NEXT_BLKP(bp));           /* remove the block from free list */
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
-        printf("after, coalesce with prev\n");
-        print_heap();
-        return(PREV_BLKP(bp));
-    }
+      }
 
-      /* case 4 */
-      // Coalesce with both
-    else if (!prevBlock && !nextBlock)
-    {
-        printf("before, coalesce with both\n");
-        print_heap();
-      	size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+        /* case 3 */
+      else if (!prev_alloc && next_alloc)
+      {
+        size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
+        bp = PREV_BLKP(bp);
+        rmv_from_free(bp);                         /* remove the block from free list */
+        PUT(HDRP(bp), PACK(size, 0));
+        PUT(FTRP(bp), PACK(size, 0));
+      }
 
-        rmvFromFree(NEXT_BLKP(bp));
-        // remove the block from free list
-        // remove the block from free list
-      	bp = PREV_BLKP(bp);
-      	PUT(HDRP(bp), PACK(size, 0));
-      	PUT(FTRP(bp), PACK(size, 0));
-        printf("after, coalesce with both\n");
-        print_heap();
-        return(PREV_BLKP(bp));
-    }
+        /* case 4 */
+      else if (!prev_alloc && !next_alloc)
+      {
+            /* add size of next and previous free block */
+        size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
+        rmv_from_free(PREV_BLKP(bp));   /* remove the block from free list */
+        rmv_from_free(NEXT_BLKP(bp));   /* remove the block from free list */
+        bp = PREV_BLKP(bp);
+        PUT(HDRP(bp), PACK(size, 0));
+        PUT(FTRP(bp), PACK(size, 0));
+      }
 
-    // Case 1: no merging
-    printf("before, no coalesce\n");
-    print_heap();
-    insertFront(bp);
-    printf("after, no coalesce\n");
-    print_heap();
-    return bp;
+        /* if case 1 occurs, it will drop down here without merging with any blocks */
+      insert_front(bp);
+      return bp;
 
     // if(prevBlock && nextBlock){
     //
