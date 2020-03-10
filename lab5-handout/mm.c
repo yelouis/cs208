@@ -267,7 +267,7 @@ static void place(void *bp, size_t asize) {
         rmvFromFree(bp);
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        
+
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
@@ -340,15 +340,16 @@ static void *coalesce(void *bp) {
         /* case 3 */
       else if (!prev_alloc && next_alloc)
       {
-        
+
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
         //bp = PREV_BLKP(bp);
+
+        rmvFromFree(PREV_BLKP(bp));                       /* remove the block from free list */
 
         PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
         //printf("Coalesce with previous block\n");
         //print_heap();
-        rmvFromFree(PREV_BLKP(bp));                       /* remove the block from free list */
         //printf("after Coalesce with previous block\n");
         return PREV_BLKP(bp);
       }
@@ -453,7 +454,7 @@ static void rmvFromFree(void *bp)
 
     //PUTPOINT(PREV_FREE_BLKP(bp), GET_ADDRESS(NEXT_FREE_BLKP(bp)));
 
-    
+
 }
 
 
@@ -485,7 +486,7 @@ static void insertFront(void *bp)
         return;
     }
 
-    
+
 }
 
 
