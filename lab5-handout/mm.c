@@ -91,6 +91,7 @@ team_t team = {
 /* Read the size and allocated fields from address p */
 #define GET_SIZE(p)  (GET(p) & ~0xf)
 #define GET_ALLOC(p) (GET(p) & 0x1)
+#define GET_ADDRESS(p) (*(void **)(p))
 
 /* Given block ptr bp, compute address of its header and footer */
 #define HDRP(bp)       (PSUB(bp, WSIZE))
