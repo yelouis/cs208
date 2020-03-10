@@ -428,7 +428,7 @@ static void insertFront(char *bp)
 
     PUTPOINT(PADD(bp, 8), free_listp);
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUTPOINT(free_listp, bp;
+    PUTPOINT(free_listp, bp);
     //PREV_FREE_BLKP(free_listp) = bp;
     PUTPOINT(bp, NULL);
     //PREV_FREE_BLKP(bp) = NULL;
