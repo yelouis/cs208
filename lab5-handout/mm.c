@@ -448,7 +448,7 @@ static void *find_fit(size_t asize) {
 
   // traverse free list
   // while loop?
-  for (bp = free_listp; GET(bp) != 0; bp = NEXT_FREE_BLKP(bp)) {
+  for (bp = free_listp; !GET(bp); bp = NEXT_FREE_BLKP(bp)) {
         if (asize <= (size_t)GET_SIZE(HDRP(bp))){
             return bp;
         }
