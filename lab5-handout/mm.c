@@ -478,8 +478,8 @@ static void *extend_heap(size_t words) {
     printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
-    printf("before extending\n");
-    print_heap();
+    // printf("before extending\n");
+    // print_heap();
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* free block header */
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
@@ -488,8 +488,8 @@ static void *extend_heap(size_t words) {
     //PUT(PREV_FREE_BLKP(bp), 0);
     //PUT(NEXT_FREE_BLKP(bp), 0);
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
-    printf("after extending\n");
-    print_heap();
+    // printf("after extending\n");
+    // print_heap();
     /* Coalesce if the previous block was free */
     return coalesce(bp);
 }
