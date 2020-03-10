@@ -262,12 +262,12 @@ static void place(void *bp, size_t asize) {
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         rmvFromFree(bp);
-        bp = NEXT_BLKP(bp);
-        PUT(HDRP(bp), PACK(curSize-asize, 0));
-        PUT(FTRP(bp), PACK(curSize-asize, 0));
+        char *nextBp = NEXT_BLKP(bp);
+        PUT(HDRP(nextBp), PACK(curSize-asize, 0));
+        PUT(FTRP(nextBp), PACK(curSize-asize, 0));
         printf("after place, splitting\n");
         print_heap();
-        coalesce(bp);
+        insertFront(nextBp);
   }
   /* not enough space for free block, don't split */
   else {
