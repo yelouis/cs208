@@ -421,7 +421,7 @@ static void insertFront(void *bp)
 {
       /* If our free list has nothing, set it.  */
     if (free_listp == NULL) {
-        PUTPOINT(bp, NULL)
+        PUTPOINT(bp, NULL);
         PUTPOINT(PADD(bp, 8), NULL);
         // NEXT_FREEP(ptr) = NULL;
         // PREV_FREEP(ptr) = NULL;
