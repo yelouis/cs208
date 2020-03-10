@@ -102,14 +102,14 @@ team_t team = {
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define PREV_FREE_BLKP(bp)  ((void *)(bp))
-#define NEXT_FREE_BLKP(bp)  ((void *)(PADD(bp, WSIZE)))
+#define PREV_FREE_BLKP(bp)  ((char *)(bp))
+#define NEXT_FREE_BLKP(bp)  ((char *)(PADD(bp, WSIZE)))
 
 /* Global variables */
 
 // Pointer to first block
 static void *heap_start = NULL;
-static void **free_listp = NULL;
+static void *free_listp = NULL;
 
 /* Function prototypes for internal helper routines */
 
@@ -139,7 +139,7 @@ int mm_init(void) {
         return -1;
 
     //Making a free_list to keep track of all the free blocks
-    free_listp = heap_start;
+    //free_listp = heap_start;
 
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, 1*WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
@@ -225,8 +225,8 @@ void mm_free(void *bp) {
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
 
-     // printf("Freeing a block\n");
-     // print_heap();
+    //printf("Freeing a block\n");
+    //print_heap();
     coalesce(bp);
 }
 
@@ -258,20 +258,21 @@ void *mm_realloc(void *ptr, size_t size) {
  */
 static void place(void *bp, size_t asize) {
     size_t curSize = GET_SIZE(HDRP(bp));
-     // printf("top of place\n");
-     // print_heap();
+    //printf("top of place\n");
+    //print_heap();
 
   if ((curSize - asize) >= DSIZE) {
-        // printf("before place, splitting\n");
-        // print_heap();
+        //printf("before place, splitting\n");
+        //print_heap();
+        rmvFromFree(bp);
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
-        rmvFromFree(bp);
+        
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        // printf("after place, splitting\n");
-        //  print_heap();
+        //printf("after place, splitting\n");
+        //print_heap();
         coalesce(nextBp);
   }
   /* not enough space for free block, don't split */
@@ -325,22 +326,31 @@ static void *coalesce(void *bp) {
 
       if (prev_alloc && !next_alloc)
       {
-        // printf("Coalesce with next block\n");
+        //printf("Coalesce with next block\n");
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));  /* add size of next free block */
         rmvFromFree(NEXT_BLKP(bp));           /* remove the block from free list */
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
+        insertFront(bp);
+        //printf("after Coalesce with next block\n");
+        //print_heap();
+        return bp;
       }
 
         /* case 3 */
       else if (!prev_alloc && next_alloc)
       {
-        // printf("Coalesce with previous block\n");
+        
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
-        bp = PREV_BLKP(bp);
-        rmvFromFree(bp);                         /* remove the block from free list */
-        PUT(HDRP(bp), PACK(size, 0));
+        //bp = PREV_BLKP(bp);
+
+        PUT(HDRP(PREV_BLKP(bp)), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
+        //printf("Coalesce with previous block\n");
+        //print_heap();
+        rmvFromFree(PREV_BLKP(bp));                       /* remove the block from free list */
+        //printf("after Coalesce with previous block\n");
+        return PREV_BLKP(bp);
       }
 
         /* case 4 */
@@ -354,13 +364,15 @@ static void *coalesce(void *bp) {
         bp = PREV_BLKP(bp);
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
+        insertFront(bp);
+        return bp;
       }
 
         /* if case 1 occurs, it will drop down here without merging with any blocks */
-      // printf("After coalescing\n");
-      // print_heap();
-      insertFront(bp);
-      return bp;
+        //printf("before coalescing\n");
+        //print_heap();
+        insertFront(bp);
+        return bp;
 
     // if(prevBlock && nextBlock){
     //
@@ -396,8 +408,29 @@ static void *coalesce(void *bp) {
  */
 static void rmvFromFree(void *bp)
 {
+    //bp is the first of the list
+    if(GET_ADDRESS(PREV_FREE_BLKP(bp)) == NULL && GET_ADDRESS(NEXT_FREE_BLKP(bp)) != NULL){
+        GET_ADDRESS(PREV_FREE_BLKP(GET_ADDRESS(NEXT_FREE_BLKP(bp)))) = NULL;
+        GET_ADDRESS(NEXT_FREE_BLKP(bp)) = NULL;
 
-    if (!GET_ADDRESS(bp)){ /* check if bp is not the first block in list */
+    }
+    //bp is the last of the list
+    else if(GET_ADDRESS(PREV_FREE_BLKP(bp)) != NULL && GET_ADDRESS(NEXT_FREE_BLKP(bp)) == NULL){
+        //printf("here2\n");
+        GET_ADDRESS(NEXT_FREE_BLKP(GET_ADDRESS(PREV_FREE_BLKP(bp)))) = NULL;
+        GET_ADDRESS(PREV_FREE_BLKP(bp)) = NULL;
+    }
+    //bp is in the middle of the list
+    else if (GET_ADDRESS(PREV_FREE_BLKP(bp)) != NULL && GET_ADDRESS(NEXT_FREE_BLKP(bp)) != NULL){
+        GET_ADDRESS(NEXT_FREE_BLKP(GET_ADDRESS(PREV_FREE_BLKP(bp)))) = GET_ADDRESS(NEXT_FREE_BLKP(bp));
+        GET_ADDRESS(PREV_FREE_BLKP(GET_ADDRESS(NEXT_FREE_BLKP(bp))))=GET_ADDRESS(PREV_FREE_BLKP(bp));
+        GET_ADDRESS(PREV_FREE_BLKP(bp))=GET_ADDRESS(NEXT_FREE_BLKP(bp))=NULL;
+    }
+    //bp is the only block in the list; both preFree and nextFree is null;
+    //free_listp = NULL;
+    return;
+
+    //if (!GET_ADDRESS(bp)){ /* check if bp is not the first block in list */
         //NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
         //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
 
@@ -405,20 +438,22 @@ static void rmvFromFree(void *bp)
         //prevBlock = GET_ADDRESS(bp);
 
         // Putting previous of the current block into the previous of the next block
-        PUTPOINT(GET_ADDRESS(PADD(bp,8)), GET_ADDRESS(bp));
-        PUTPOINT(PADD(GET_ADDRESS(bp), 8), GET_ADDRESS(PADD(bp,8)));
+        //PUTPOINT(GET_ADDRESS(PADD(bp,8)), GET_ADDRESS(bp));
+        //PUTPOINT(PADD(GET_ADDRESS(bp), 8), GET_ADDRESS(PADD(bp,8)));
+
+
 
         //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8), GET_ADDRESS(PREV_FREE_BLKP(bp)));
 
-    }else{
-        free_listp = GET_ADDRESS(PADD(free_listp, 8));
-        PUTPOINT(free_listp, NULL);
-    }
+    //}else{
+        //free_listp = GET_ADDRESS(PADD(free_listp, 8));
+        //PUTPOINT(free_listp, NULL);
+    //}
     //PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
 
     //PUTPOINT(PREV_FREE_BLKP(bp), GET_ADDRESS(NEXT_FREE_BLKP(bp)));
 
-    return;
+    
 }
 
 
@@ -430,22 +465,27 @@ static void insertFront(void *bp)
 {
       /* If our free list has nothing, set it.  */
     if (free_listp == NULL) {
-        PUTPOINT(bp, NULL);
-        PUTPOINT(PADD(bp, 8), NULL);
-        // NEXT_FREEP(ptr) = NULL;
-        // PREV_FREEP(ptr) = NULL;
+        //printf("insert the 1st\n");
+        //PUTPOINT(bp, NULL);
+        //PUTPOINT(PADD(bp, 8), NULL);
+        GET_ADDRESS(NEXT_FREE_BLKP(bp)) = NULL;
+        GET_ADDRESS(PREV_FREE_BLKP(bp)) = NULL;
+        free_listp = bp;
+        return;
+    }
+    else{
+        //printf("insert more\n");
+        //PUTPOINT(PADD(bp, 8), free_listp);
+        GET_ADDRESS(NEXT_FREE_BLKP(bp)) = free_listp;
+        //PUTPOINT(free_listp, bp);
+        GET_ADDRESS(PREV_FREE_BLKP(free_listp)) = bp;
+        //PUTPOINT(bp, NULL);
+        GET_ADDRESS(PREV_FREE_BLKP(bp)) = NULL;
         free_listp = bp;
         return;
     }
 
-    PUTPOINT(PADD(bp, 8), free_listp);
-    //NEXT_FREE_BLKP(bp) = free_listp;
-    PUTPOINT(free_listp, bp);
-    //PREV_FREE_BLKP(free_listp) = bp;
-    PUTPOINT(bp, NULL);
-    //PREV_FREE_BLKP(bp) = NULL;
-    free_listp = bp;
-	return;
+    
 }
 
 
@@ -456,13 +496,12 @@ static void *find_fit(size_t asize) {
   void *bp;
 
   // traverse free list
-  // while loop?
-  for (bp = free_listp; !GET(bp); bp = NEXT_FREE_BLKP(bp)) {
+    for (bp = free_listp; GET_ADDRESS(NEXT_FREE_BLKP(bp)) == NULL; bp = NEXT_FREE_BLKP(bp)) {
         if (asize <= (size_t)GET_SIZE(HDRP(bp))){
             return bp;
         }
-  }
-  return NULL; // No fit
+    }
+    return NULL; // No fit
 
     // /* search from the start of the free list to the end */
     // for (char *cur_block = heap_start; GET_SIZE(HDRP(cur_block)) > 0; cur_block = NEXT_BLKP(cur_block)) {
@@ -487,8 +526,8 @@ static void *extend_heap(size_t words) {
     printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
-    // printf("before extending\n");
-    // print_heap();
+    //printf("before extending\n");
+    //print_heap();
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* free block header */
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
@@ -497,8 +536,9 @@ static void *extend_heap(size_t words) {
     //PUT(PREV_FREE_BLKP(bp), 0);
     //PUT(NEXT_FREE_BLKP(bp), 0);
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
-    // printf("after extending\n");
-    // print_heap();
+    //printf("after extending\n");
+    //print_heap();
+
     /* Coalesce if the previous block was free */
     return coalesce(bp);
 }
