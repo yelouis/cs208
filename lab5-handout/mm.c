@@ -315,8 +315,12 @@ static void *coalesce(void *bp) {
       size_t size = GET_SIZE(HDRP(bp));
 
         /* case 2 */
+      printf("Before coalescing\n");
+      print_heap();
+
       if (prev_alloc && !next_alloc)
       {
+        printf("Coalesce with next block\n");
         size += GET_SIZE(HDRP(NEXT_BLKP(bp)));  /* add size of next free block */
         rmvFromFree(NEXT_BLKP(bp));           /* remove the block from free list */
         PUT(HDRP(bp), PACK(size, 0));
@@ -326,6 +330,7 @@ static void *coalesce(void *bp) {
         /* case 3 */
       else if (!prev_alloc && next_alloc)
       {
+        printf("Coalesce with previous block\n");
         size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
         bp = PREV_BLKP(bp);
         rmvFromFree(bp);                         /* remove the block from free list */
@@ -336,6 +341,7 @@ static void *coalesce(void *bp) {
         /* case 4 */
       else if (!prev_alloc && !next_alloc)
       {
+        printf("Coalesce with both blocks\n");
             /* add size of next and previous free block */
         size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
         rmvFromFree(PREV_BLKP(bp));   /* remove the block from free list */
@@ -346,6 +352,8 @@ static void *coalesce(void *bp) {
       }
 
         /* if case 1 occurs, it will drop down here without merging with any blocks */
+      printf("After coalescing\n");
+      print_heap();
       insertFront(bp);
       return bp;
 
