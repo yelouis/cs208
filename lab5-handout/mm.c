@@ -136,6 +136,7 @@ int mm_init(void) {
         return -1;
 
     //Making a free_list to keep track of all the free blocks
+    free_listp = heap_start;
 
     PUT(heap_start, 0);                        /* alignment padding */
     PUT(PADD(heap_start, 1*WSIZE), PACK(OVERHEAD, 1));  /* prologue header */
@@ -143,9 +144,6 @@ int mm_init(void) {
     PUT(PADD(heap_start, 3*WSIZE), PACK(0, 1));   /* epilogue header */
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
-
-    free_listp = heap_start;
-
 
     printf("heap in init\n");
     print_heap();
@@ -269,7 +267,7 @@ static void place(void *bp, size_t asize) {
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
         printf("after place, splitting\n");
         print_heap();
-        insertFront(nextBp);
+        coalesce(nextBp);
   }
   /* not enough space for free block, don't split */
   else {
