@@ -222,6 +222,8 @@ void mm_free(void *bp) {
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
 
+    printf("Freeing a block\n");
+    print_heap();
     coalesce(bp);
 }
 
