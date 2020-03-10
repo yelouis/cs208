@@ -120,7 +120,7 @@ static void *extend_heap(size_t size);
 static void *find_fit(size_t asize);
 static void *coalesce(void *bp);
 static void rmvFromFree(void *bp);
-static void insertFront(void *bp);
+static void insertFront(char *bp);
 static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
 
@@ -341,7 +341,7 @@ static void *coalesce(void *bp) {
         // remove the block from free list
         PUT(HDRP(bp), PACK(size, 0));
         PUT(FTRP(bp), PACK(size, 0));
-        printf("before, coalesce with prev\n");
+        printf("after, coalesce with prev\n");
         print_heap();
         return(PREV_BLKP(bp));
     }
@@ -410,13 +410,15 @@ static void rmvFromFree(void *bp)
 
     if (PREV_FREE_BLKP(bp)) /* check if bp is not the first block in list */
         //NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
-        PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
+        //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
+
+        PUT(PADD(NEXT_FREE_BLKP(bp), 8), GET(PREV_FREE_BLKP(bp)));
 
     else
         free_listp = NEXT_FREE_BLKP(bp);
 
     //PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
-    PUTPOINT(PREV_FREE_BLKP(bp), *NEXT_FREE_BLKP(bp));
+    PUT(PREV_FREE_BLKP(bp), GET(NEXT_FREE_BLKP(bp)));
 
     return;
 }
@@ -426,13 +428,13 @@ static void rmvFromFree(void *bp)
  * insertFront - inserts free block bp at the front of the free_list
  * FILO (first in last out) free linked list, last node points to self
  */
-static void insertFront(void *bp)
+static void insertFront(char *bp)
 {
-    PUTPOINT(PADD(bp, 8), *free_listp);
+    PUT(PADD(bp, 8), GET(free_listp));
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUTPOINT(free_listp, *bp);
+    PUT(free_listp, GET(bp));
     //PREV_FREE_BLKP(free_listp) = bp;
-    PUTPOINT(bp, NULL);
+    PUT(bp, 0);
     //PREV_FREE_BLKP(bp) = NULL;
     free_listp = bp;
 	return;
