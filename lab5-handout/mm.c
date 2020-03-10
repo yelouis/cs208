@@ -121,7 +121,7 @@ static void *extend_heap(size_t size);
 static void *find_fit(size_t asize);
 static void *coalesce(void *bp);
 static void rmvFromFree(void *bp);
-static void insertFront(char *bp);
+static void insertFront(void *bp);
 static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
 
@@ -401,13 +401,13 @@ static void rmvFromFree(void *bp)
         //NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
         //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
 
-        PUT(PADD(NEXT_FREE_BLKP(bp), 8), GET(PREV_FREE_BLKP(bp)));
+        PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8), GET_ADDRESS(PREV_FREE_BLKP(bp)));
 
     else
-        free_listp = NEXT_FREE_BLKP(bp);
+        free_listp = GET_ADDRESS(NEXT_FREE_BLKP(bp));
 
     //PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
-    PUT(PREV_FREE_BLKP(bp), GET(NEXT_FREE_BLKP(bp)));
+    PUTPOINT(PREV_FREE_BLKP(bp), GET_ADDRESS(NEXT_FREE_BLKP(bp)));
 
     return;
 }
@@ -421,19 +421,19 @@ static void insertFront(void *bp)
 {
       /* If our free list has nothing, set it.  */
     if (free_listp == NULL) {
-        PUT(bp, 0);
-        PUT(PADD(bp, 8), 0);
+        PUTPOINT(bp, NULL)
+        PUTPOINT(PADD(bp, 8), NULL);
         // NEXT_FREEP(ptr) = NULL;
         // PREV_FREEP(ptr) = NULL;
         free_listp = bp;
         return;
     }
 
-    PUT(PADD(bp, 8), GET(GET_ADDRESS(free_listp)));
+    PUTPOINT(PADD(bp, 8), GET_ADDRESS(free_listp));
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUT(free_listp, GET(GET_ADDRESS(bp)));
+    PUTPOINT(free_listp, GET_ADDRESS(bp));
     //PREV_FREE_BLKP(free_listp) = bp;
-    PUT(bp, 0);
+    PUTPOINT(bp, NULL);
     //PREV_FREE_BLKP(bp) = NULL;
     free_listp = bp;
 	return;
