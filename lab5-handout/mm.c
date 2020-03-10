@@ -397,17 +397,26 @@ static void *coalesce(void *bp) {
 static void rmvFromFree(void *bp)
 {
 
-    if (PREV_FREE_BLKP(bp)) /* check if bp is not the first block in list */
+    if (!GET_ADDRESS(bp)){ /* check if bp is not the first block in list */
         //NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
         //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
 
-        PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8), GET_ADDRESS(PREV_FREE_BLKP(bp)));
+        //nextBlock = GET_ADDRESS(PADD(bp,8));
+        //prevBlock = GET_ADDRESS(bp);
 
-    else
-        free_listp = GET_ADDRESS(NEXT_FREE_BLKP(bp));
+        // Putting previous of the current block into the previous of the next block
+        PUTPOINT(GET_ADDRESS(PADD(bp,8)), GET_ADDRESS(bp));
+        PUTPOINT(PADD(GET_ADDRESS(bp), 8), GET_ADDRESS(PADD(bp,8)));
 
+        //PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8), GET_ADDRESS(PREV_FREE_BLKP(bp)));
+
+    }else{
+        free_listp = GET_ADDRESS(PADD(free_listp, 8));
+        PUTPOINT(free_listp, NULL);
+    }
     //PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
-    PUTPOINT(PREV_FREE_BLKP(bp), GET_ADDRESS(NEXT_FREE_BLKP(bp)));
+
+    //PUTPOINT(PREV_FREE_BLKP(bp), GET_ADDRESS(NEXT_FREE_BLKP(bp)));
 
     return;
 }
@@ -429,9 +438,9 @@ static void insertFront(void *bp)
         return;
     }
 
-    PUTPOINT(PADD(bp, 8), GET_ADDRESS(free_listp));
+    PUTPOINT(PADD(bp, 8), free_listp);
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUTPOINT(free_listp, GET_ADDRESS(bp));
+    PUTPOINT(free_listp, bp);
     //PREV_FREE_BLKP(free_listp) = bp;
     PUTPOINT(bp, NULL);
     //PREV_FREE_BLKP(bp) = NULL;
