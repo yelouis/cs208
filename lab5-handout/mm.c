@@ -81,7 +81,7 @@ team_t team = {
 #define GET(p)       (*(size_t *)(p))
 #define PUT(p, val)  (*(size_t *)(p) = (val))
 
-#define PUTPOINT(p, val)  (*(char *)(p) = (val))
+#define PUTPOINT(p, val)  (*(void *)(p) = (val))
 
 
 /* Perform unscaled pointer arithmetic */
