@@ -74,7 +74,6 @@ team_t team = {
 
 #define ALIGN(p) (((size_t)(p) + (ALIGNMENT-1)) & ~0x7)
 
-#define MAX(x, y) ((x) > (y)? (x) : (y))
 
 
 
