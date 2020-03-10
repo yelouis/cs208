@@ -124,6 +124,8 @@ static void insertFront(char *bp);
 static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
 
+//Currently a version that works up till trace 6
+
 /*
  * mm_init -- <What does this function do?>
  * <What are the function's arguments?>
