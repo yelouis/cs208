@@ -81,7 +81,7 @@ team_t team = {
 #define GET(p)       (*(size_t *)(p))
 #define PUT(p, val)  (*(size_t *)(p) = (val))
 
-#define PUTPOINT(p, val)  ((void *)(p) = (val))
+#define PUTPOINT(p, val)  (*(char *)(p) = (val))
 
 
 /* Perform unscaled pointer arithmetic */
@@ -426,11 +426,11 @@ static void insertFront(char *bp)
         return;
     }
 
-    PUTPOINT(PADD(bp, 8), free_listp);
+    PUT(PADD(bp, 8), GET(free_listp));
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUTPOINT(free_listp, bp);
+    PUT(free_listp, GET(bp));
     //PREV_FREE_BLKP(free_listp) = bp;
-    PUTPOINT(bp, NULL);
+    PUT(bp, 0);
     //PREV_FREE_BLKP(bp) = NULL;
     free_listp = bp;
 	return;
@@ -445,7 +445,7 @@ static void *find_fit(size_t asize) {
 
   // traverse free list
   // while loop?
-  for (bp = free_listp; !bp; bp = NEXT_FREE_BLKP(bp)) {
+  for (bp = free_listp; GET(bp) != 0; bp = NEXT_FREE_BLKP(bp)) {
         if (asize <= (size_t)GET_SIZE(HDRP(bp))){
             return bp;
         }
