@@ -81,7 +81,7 @@ team_t team = {
 #define GET(p)       (*(size_t *)(p))
 #define PUT(p, val)  (*(size_t *)(p) = (val))
 
-#define PUTPOINT(p, val)  (*(void *)(p) = (val))
+#define PUTPOINT(p, val)  (*(char *)(p) = (val))
 
 
 /* Perform unscaled pointer arithmetic */
@@ -101,8 +101,8 @@ team_t team = {
 #define PREV_BLKP(bp)  ((char *)PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define NEXT_FREE_BLKP(bp)  (*(char **)(PADD(bp, WSIZE)))
-#define PREV_FREE_BLKP(bp)  (*(char **)(bp))
+#define PREV_FREE_BLKP(bp)  ((char *)(bp))
+#define NEXT_FREE_BLKP(bp)  ((char *)(PADD(bp, WSIZE)))
 
 /* Global variables */
 
@@ -409,11 +409,14 @@ static void rmvFromFree(void *bp)
 {
 
     if (PREV_FREE_BLKP(bp)) /* check if bp is not the first block in list */
-        NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+        //NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
+        PUTPOINT(PADD(NEXT_FREE_BLKP(bp), 8),  *PREV_FREE_BLKP(bp));
+
     else
         free_listp = NEXT_FREE_BLKP(bp);
 
-    PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+    //PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
+    PUTPOINT(PREV_FREE_BLKP(bp), *NEXT_FREE_BLKP(bp));
 
     return;
 }
@@ -425,9 +428,12 @@ static void rmvFromFree(void *bp)
  */
 static void insertFront(void *bp)
 {
-    NEXT_FREE_BLKP(bp) = free_listp;
-    PREV_FREE_BLKP(free_listp) = bp;
-    PREV_FREE_BLKP(bp) = NULL;
+    PUTPOINT(PADD(bp, 8), *free_listp);
+    //NEXT_FREE_BLKP(bp) = free_listp;
+    PUTPOINT(free_listp, *bp);
+    //PREV_FREE_BLKP(free_listp) = bp;
+    PUTPOINT(bp, NULL);
+    //PREV_FREE_BLKP(bp) = NULL;
     free_listp = bp;
 	return;
 }
