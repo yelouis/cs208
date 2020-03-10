@@ -81,7 +81,7 @@ team_t team = {
 #define GET(p)       (*(size_t *)(p))
 #define PUT(p, val)  (*(size_t *)(p) = (val))
 
-#define PUTPOINT(p, val)  (*(char *)(p) = (val))
+#define PUTPOINT(p, val)  (*(void **)(p) = (val))
 
 
 /* Perform unscaled pointer arithmetic */
@@ -98,18 +98,18 @@ team_t team = {
 #define FTRP(bp)       (PADD(bp, GET_SIZE(HDRP(bp)) - DSIZE))
 
 /* Given block ptr bp, compute address of next and previous blocks */
-#define NEXT_BLKP(bp)  ((char *)PADD(bp, GET_SIZE(HDRP(bp))))
-#define PREV_BLKP(bp)  ((char *)PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
+#define NEXT_BLKP(bp)  (PADD(bp, GET_SIZE(HDRP(bp))))
+#define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define PREV_FREE_BLKP(bp)  ((char *)(bp))
-#define NEXT_FREE_BLKP(bp)  ((char *)(PADD(bp, WSIZE)))
+#define PREV_FREE_BLKP(bp)  ((void *)(bp))
+#define NEXT_FREE_BLKP(bp)  ((void *)(PADD(bp, WSIZE)))
 
 /* Global variables */
 
 // Pointer to first block
 static void *heap_start = NULL;
-static char *free_listp = NULL;
+static void **free_listp = NULL;
 
 /* Function prototypes for internal helper routines */
 
@@ -148,8 +148,8 @@ int mm_init(void) {
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
-    // printf("heap in init\n");
-    // print_heap();
+     printf("heap in init\n");
+     print_heap();
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
@@ -225,8 +225,8 @@ void mm_free(void *bp) {
     PUT(curHdr, PACK(blockSize, 0x0));
     PUT(curFtr, PACK(blockSize, 0x0));
 
-    // printf("Freeing a block\n");
-    // print_heap();
+     printf("Freeing a block\n");
+     print_heap();
     coalesce(bp);
 }
 
@@ -258,30 +258,30 @@ void *mm_realloc(void *ptr, size_t size) {
  */
 static void place(void *bp, size_t asize) {
     size_t curSize = GET_SIZE(HDRP(bp));
-    // printf("top of place\n");
-    // print_heap();
+     printf("top of place\n");
+     print_heap();
 
   if ((curSize - asize) >= DSIZE) {
-        // printf("before place, splitting\n");
-        // print_heap();
+        printf("before place, splitting\n");
+        print_heap();
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
         rmvFromFree(bp);
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        // printf("after place, splitting\n");
-        // print_heap();
+        printf("after place, splitting\n");
+         print_heap();
         coalesce(nextBp);
   }
   /* not enough space for free block, don't split */
   else {
-        // printf("before place, no splitting\n");
-        // print_heap();
+        printf("before place, no splitting\n");
+        print_heap();
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
-        // printf("after place, no splitting\n");
-        // print_heap();
+        printf("after place, no splitting\n");
+        print_heap();
         rmvFromFree(bp);
   }
 
@@ -417,7 +417,7 @@ static void rmvFromFree(void *bp)
  * insertFront - inserts free block bp at the front of the free_list
  * FILO (first in last out) free linked list, last node points to self
  */
-static void insertFront(char *bp)
+static void insertFront(void *bp)
 {
       /* If our free list has nothing, set it.  */
     if (free_listp == NULL) {
@@ -429,9 +429,9 @@ static void insertFront(char *bp)
         return;
     }
 
-    PUT(PADD(bp, 8), GET(free_listp));
+    PUT(PADD(bp, 8), GET(GET_ADDRESS(free_listp)));
     //NEXT_FREE_BLKP(bp) = free_listp;
-    PUT(free_listp, GET(bp));
+    PUT(free_listp, GET(GET_ADDRESS(bp)));
     //PREV_FREE_BLKP(free_listp) = bp;
     PUT(bp, 0);
     //PREV_FREE_BLKP(bp) = NULL;
@@ -475,11 +475,11 @@ static void *extend_heap(size_t words) {
     size = words * WSIZE;
     if (words % 2 == 1)
         size += WSIZE;
-    // printf("extending heap to %zu bytes\n", mem_heapsize());
+    printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
-    // printf("before extending\n");
-    // print_heap();
+    printf("before extending\n");
+    print_heap();
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* free block header */
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
@@ -488,8 +488,8 @@ static void *extend_heap(size_t words) {
     //PUT(PREV_FREE_BLKP(bp), 0);
     //PUT(NEXT_FREE_BLKP(bp), 0);
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
-    // printf("after extending\n");
-    // print_heap();
+    printf("after extending\n");
+    print_heap();
     /* Coalesce if the previous block was free */
     return coalesce(bp);
 }
