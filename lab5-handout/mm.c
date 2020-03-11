@@ -148,8 +148,8 @@ int mm_init(void) {
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
-     // printf("heap in init\n");
-     // print_heap();
+     printf("heap in init\n");
+     print_heap();
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
@@ -170,7 +170,7 @@ void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
     size_t extendsize; /* amount to extend heap if no fit */
     char *bp;
-    // printf("malloc\n");
+    printf("malloc\n");
 
     /* Ignore spurious requests */
     if (size <= 0)
@@ -186,11 +186,11 @@ void *mm_malloc(size_t size) {
     /* Search the free list for a fit */
     if ((bp = find_fit(asize)) != NULL) {
         place(bp, asize);
-        // printf("enough space\n");
+        printf("enough space\n");
         return bp;
     }
     /* No fit found. Get more memory and place the block */
-    // printf("need to get more memory for heap\n");
+    printf("need to get more memory for heap\n");
     extendsize = max(asize, CHUNKSIZE);
     if ((bp = extend_heap(extendsize / WSIZE)) == NULL)
         return NULL;
@@ -210,14 +210,14 @@ void *mm_malloc(size_t size) {
  * Postcondition: Valid bit becomes 0.
  */
 void mm_free(void *bp) {
-    // printf("Going to free a block\n");
-    // print_heap();
+    printf("Going to free a block\n");
+    print_heap();
     char *curHdr = HDRP(bp);
     char *curFtr = FTRP(bp);
 
     //check if the current block is allocated
     if(GET_ALLOC(curHdr) == 0){
-        // printf("The block is already free!");
+        printf("The block is already free!");
         return;
     }
 
@@ -226,8 +226,8 @@ void mm_free(void *bp) {
     PUT(curHdr, PACK(blockSize, 0));
     PUT(curFtr, PACK(blockSize, 0));
 
-    // printf("Freed a block\n");
-    // print_heap();
+    printf("Freed a block\n");
+    print_heap();
     coalesce(bp);
 }
 
@@ -259,12 +259,12 @@ void *mm_realloc(void *ptr, size_t size) {
  */
 static void place(void *bp, size_t asize) {
     size_t curSize = GET_SIZE(HDRP(bp));
-    //printf("top of place\n");
-    //print_heap();
+    printf("top of place\n");
+    print_heap();
 
   if ((curSize - asize) >= DSIZE+OVERHEAD) {
-        // printf("before place, splitting\n");
-        // print_heap();
+        printf("before place, splitting\n");
+        print_heap();
         rmv_from_free(bp);
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
@@ -272,18 +272,18 @@ static void place(void *bp, size_t asize) {
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        // printf("after place, splitting\n");
-        // print_heap();
+        printf("after place, splitting\n");
+        print_heap();
         coalesce(nextBp);
   }
   /* not enough space for free block, don't split */
   else {
-        // printf("before place, no splitting\n");
-        // print_heap();
+        printf("before place, no splitting\n");
+        print_heap();
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
-        // printf("after place, no splitting\n");
-        // print_heap();
+        printf("after place, no splitting\n");
+        print_heap();
         rmv_from_free(bp);
   }
 
@@ -321,13 +321,13 @@ static void place(void *bp, size_t asize) {
  	size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
 
  	size_t size = GET_SIZE(HDRP(bp));
-  // printf("Before coalesce\n");
-  // print_heap();
+  printf("Before coalesce\n");
+  print_heap();
 
      /* case 2 */
  	if (prev_alloc && !next_alloc)
  	{
-    // printf("Coalesce with next\n");
+    printf("Coalesce with next\n");
  		size += GET_SIZE(HDRP(NEXT_BLKP(bp)));  /* add size of next free block */
  		rmv_from_free(NEXT_BLKP(bp));           /* remove the block from free list */
  		PUT(HDRP(bp), PACK(size, 0));
@@ -337,7 +337,7 @@ static void place(void *bp, size_t asize) {
      /* case 3 */
  	else if (!prev_alloc && next_alloc)
  	{
-    // printf("Coalesce with prev\n");
+    printf("Coalesce with prev\n");
  	  size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
  	  bp = PREV_BLKP(bp);
  	  rmv_from_free(bp);                         /* remove the block from free list */
@@ -348,7 +348,7 @@ static void place(void *bp, size_t asize) {
      /* case 4 */
  	else if (!prev_alloc && !next_alloc)
  	{
-    // printf("Coalesce with both\n");
+    printf("Coalesce with both\n");
          /* add size of next and previous free block */
  		size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
  		rmv_from_free(PREV_BLKP(bp));   /* remove the block from free list */
@@ -357,12 +357,12 @@ static void place(void *bp, size_t asize) {
  		PUT(HDRP(bp), PACK(size, 0));
  		PUT(FTRP(bp), PACK(size, 0));
  	}else if(prev_alloc && next_alloc){
-    // printf("Coalesce with nothing\n");
+    printf("Coalesce with nothing\n");
   }
 
      /* if case 1 occurs, it will drop down here without merging with any blocks */
  	insert_front(bp);
-  // print_heap();
+  print_heap();
  	return bp;
 
     // if(prevBlock && nextBlock){
@@ -431,7 +431,7 @@ static void *find_fit(size_t asize)
 
     /* traverse free list */
     for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
-      // printf("Looping\n");
+      printf("Looping\n");
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
     }
@@ -455,8 +455,8 @@ static void *extend_heap(size_t words) {
     printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
-    //printf("before extending\n");
-    //print_heap();
+    printf("before extending\n");
+    print_heap();
     /* Initialize free block header/footer and the epilogue header */
     PUT(HDRP(bp), PACK(size, 0));         /* free block header */
     PUT(FTRP(bp), PACK(size, 0));         /* free block footer */
@@ -465,8 +465,8 @@ static void *extend_heap(size_t words) {
     //PUT(PREV_FREE_BLKP(bp), 0);
     //PUT(NEXT_FREE_BLKP(bp), 0);
     PUT(HDRP(NEXT_BLKP(bp)), PACK(0, 1)); /* new epilogue header */
-    //printf("after extending\n");
-    //print_heap();
+    printf("after extending\n");
+    print_heap();
 
     /* Coalesce if the previous block was free */
     return coalesce(bp);
