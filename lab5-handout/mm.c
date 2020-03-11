@@ -429,6 +429,7 @@ static void *find_fit(size_t asize)
 
     /* traverse free list */
     for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
+      printf("Looping\n");
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
     }
