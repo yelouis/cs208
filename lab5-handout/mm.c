@@ -78,8 +78,8 @@ team_t team = {
 #define PACK(size, alloc)  ((size) | (alloc))
 
 /* Read and write a word at address p */
-#define GET(p)       (*(unsigned int *)(p))
-#define PUT(p, val)  (*(unsigned int *)(p) = (val))
+#define GET(p)       (*(size_t *)(p))
+#define PUT(p, val)  (*(size_t *)(p) = (val))
 
 /* Perform unscaled pointer arithmetic */
 #define PADD(p, val) ((char *)(p) + (val))
@@ -99,11 +99,11 @@ team_t team = {
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define PREV_FREE_BLKP(bp)  (*(void **)(bp))
-#define NEXT_FREE_BLKP(bp)  (*(void **)(PADD(bp, WSIZE)))
+#define PREV_FREE_BLKP(bp)  (*(void *)(GET(bp)))
+#define NEXT_FREE_BLKP(bp)  (*(void *) (GET((PADD(bp, WSIZE)))))
 
-#define GET_ADDRESS(p) (*(void **)(p))
-#define PUTPOINT(p, val)  (*(void **)(p) = (val))
+#define GET_P(p) (*(void *)(p))
+#define PUT_P(p, val)  (*(void *)(p) = (val))
 
 /* Global variables */
 
@@ -386,23 +386,29 @@ static void place(void *bp, size_t asize) {
 
 static void insert_front(void *bp)
 {
-    NEXT_FREE_BLKP(bp) = free_listp;
-    PREV_FREE_BLKP(free_listp) = bp;
-    PREV_FREE_BLKP(bp) = NULL;
-    free_listp = bp;
+    if(free_listp == NULL){
+      PUT_P(bp, NULL);
+      PUT_P(PADD(bp, 8), NULL);
+      free_listp = bp;
+    }else{
+      PUT_P(bp, NULL);
+      PUT_P(PADD(bp, 8), free_listp);
+      PUT_P(free_listp, bp);
+      free_listp = bp;
+    }
 	return;
 }
 
 static void rmv_from_free(void *bp)
 {
 
-    if (PREV_FREE_BLKP(bp)) /* check if bp is the first block in list */
-        NEXT_FREE_BLKP(PREV_FREE_BLKP(bp)) = NEXT_FREE_BLKP(bp);
-    else
+    if (PREV_FREE_BLKP(bp) != NULL){ /* check if bp is the first block in list */
+        PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
         free_listp = NEXT_FREE_BLKP(bp);
-
-    PREV_FREE_BLKP(NEXT_FREE_BLKP(bp)) = PREV_FREE_BLKP(bp);
-
+    }else{
+        PUT_P(NEXT_FREE_BLKP(bp), NULL);
+        free_listp = NEXT_FREE_BLKP(bp);
+    }
     return;
 }
 
@@ -411,7 +417,7 @@ static void *find_fit(size_t asize)
     void *bp;
 
     /* traverse free list */
-    for (bp = free_listp; GET_ALLOC(HDRP(bp)) == 0; bp = NEXT_FREE_BLKP(bp)) {
+    for (bp = free_listp; GET_ALLOC(HDRP(bp)) != 0; bp = NEXT_FREE_BLKP(bp)) {
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
     }
