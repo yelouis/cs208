@@ -397,17 +397,17 @@ static void place(void *bp, size_t asize) {
 
 static void insert_front(void *bp)
 {
-  printf("Inserting into free list\n");
-  print_free_heap();
+  // printf("Inserting into free list\n");
+  // print_free_heap();
 
     if(free_listp == NULL){
-      printf("Inserting into empty free list\n");
+      // printf("Inserting into empty free list\n");
 
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), NULL);
       free_listp = bp;
     }else{
-      printf("Inserting into free list with something\n");
+      // printf("Inserting into free list with something\n");
 
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), free_listp);
@@ -420,25 +420,25 @@ static void insert_front(void *bp)
 
 static void rmv_from_free(void *bp)
 {
-  printf("removing from free list\n");
+  // printf("removing from free list\n");
 
   print_free_heap();
     if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){
-        printf("many things in free list\n");
+        // printf("many things in free list\n");
 
         PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NEXT_FREE_BLKP(bp));
     }else if (PREV_FREE_BLKP(bp) == NULL && NEXT_FREE_BLKP(bp) != NULL){
-        printf("first thing in free list\n");
+        // printf("first thing in free list\n");
 
         PUT_P(NEXT_FREE_BLKP(bp), NULL);
         free_listp = NEXT_FREE_BLKP(bp);
     }else if(PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) == NULL){
-        printf("last thing in free list\n");
+        // printf("last thing in free list\n");
 
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NULL);
     }else{
-        printf("only thing in free list\n");
+        // printf("only thing in free list\n");
         free_listp = NULL;
     }
     print_free_heap();
@@ -452,7 +452,7 @@ static void *find_fit(size_t asize)
 
     /* traverse free list */
     for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
-      printf("Looping\n");
+      // printf("Looping\n");
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
     }
