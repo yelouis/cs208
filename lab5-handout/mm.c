@@ -103,7 +103,7 @@ team_t team = {
 #define NEXT_FREE_BLKP(bp)  (*(void **) (GET_P((PADD(bp, WSIZE)))))
 
 #define GET_P(p) ((void **)(p))
-#define PUT_P(p, val)  ((void **)(p) = (val))
+#define PUT_P(p, val)  (*(void **)(p) = (val))
 
 /* Global variables */
 
