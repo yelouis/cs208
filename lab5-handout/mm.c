@@ -78,8 +78,8 @@ team_t team = {
 #define PACK(size, alloc)  ((size) | (alloc))
 
 /* Read and write a word at address p */
-#define GET(p)       (*(size_t *)(p))
-#define PUT(p, val)  (*(size_t *)(p) = (val))
+#define GET(p)       (*(unsigned int *)(p))
+#define PUT(p, val)  (*(unsigned int *)(p) = (val))
 
 /* Perform unscaled pointer arithmetic */
 #define PADD(p, val) ((char *)(p) + (val))
