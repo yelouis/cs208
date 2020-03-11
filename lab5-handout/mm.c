@@ -559,7 +559,7 @@ static void print_free_heap() {
     }
 
     while(GET_P(bp) != NULL){
-      print_block(bp);
+      print_block(GET_P(bp));
       bp = NEXT_FREE_BLKP(bp);
     }
 
