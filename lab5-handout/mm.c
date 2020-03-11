@@ -99,8 +99,8 @@ team_t team = {
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define PREV_FREE_BLKP(bp)  (*(void *)(GET_P(bp)))
-#define NEXT_FREE_BLKP(bp)  (*(void *) (GET_P((PADD(bp, WSIZE)))))
+#define PREV_FREE_BLKP(bp)  (*(void **)(GET_P(bp)))
+#define NEXT_FREE_BLKP(bp)  (*(void **) (GET_P((PADD(bp, WSIZE)))))
 
 #define GET_P(p) (*(void **)(p))
 #define PUT_P(p, val)  (*(void **)(p) = (val))
@@ -402,12 +402,16 @@ static void insert_front(void *bp)
 static void rmv_from_free(void *bp)
 {
 
-    if (PREV_FREE_BLKP(bp) != NULL){ /* check if bp is the first block in list */
+    if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){ /* check if bp is the first block in list */
         PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
-        free_listp = NEXT_FREE_BLKP(bp);
-    }else{
+        PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NEXT_FREE_BLKP(bp));
+    }else if (PREV_FREE_BLKP(bp) == NULL && NEXT_FREE_BLKP(bp) != NULL){
         PUT_P(NEXT_FREE_BLKP(bp), NULL);
         free_listp = NEXT_FREE_BLKP(bp);
+    }else if(PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) == NULL){
+        PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NULL);
+    }else{
+        free_listp = NULL
     }
     return;
 }
