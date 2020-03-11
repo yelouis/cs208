@@ -397,7 +397,7 @@ static void place(void *bp, size_t asize) {
 static void insert_front(void *bp)
 {
   printf("Inserting into free list\n");
-  print_free_heap();
+  //print_free_heap();
     if(free_listp == NULL){
       printf("Inserting into empty free list\n");
       PUT_P(bp, NULL);
@@ -410,14 +410,14 @@ static void insert_front(void *bp)
       PUT_P(free_listp, bp);
       free_listp = bp;
     }
-    print_free_heap();
+    //print_free_heap();
 	return;
 }
 
 static void rmv_from_free(void *bp)
 {
   printf("removing from free list\n");
-  print_free_heap();
+  //print_free_heap();
     if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){
         printf("only thing in free list\n");
         PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
@@ -433,7 +433,7 @@ static void rmv_from_free(void *bp)
         printf("only thing in free list\n");
         free_listp = NULL;
     }
-    print_free_heap();
+    //print_free_heap();
 
     return;
 }
@@ -443,7 +443,7 @@ static void *find_fit(size_t asize)
     void *bp;
 
     /* traverse free list */
-    for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
+    for (bp = free_listp; GET_P(bp) != NULL; bp = NEXT_FREE_BLKP(bp)) {
       printf("Looping\n");
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
