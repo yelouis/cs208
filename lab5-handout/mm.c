@@ -457,7 +457,7 @@ static void *find_fit(size_t asize)
 	        return bp;
     }
 
-    printf("Returned NULL in find_fit\n");
+    // printf("Returned NULL in find_fit\n");
 
     return NULL; // No fit
 }
@@ -473,7 +473,7 @@ static void *extend_heap(size_t words) {
     size = words * WSIZE;
     if (words % 2 == 1)
         size += WSIZE;
-    printf("extending heap to %zu bytes\n", mem_heapsize());
+    // printf("extending heap to %zu bytes\n", mem_heapsize());
     if ((long)(bp = mem_sbrk(size)) < 0)
         return NULL;
     // printf("before extending\n");
