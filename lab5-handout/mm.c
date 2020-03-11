@@ -395,33 +395,45 @@ static void place(void *bp, size_t asize) {
 
 static void insert_front(void *bp)
 {
+  printf("Inserting into free list\n");
+  print_free_heap();
     if(free_listp == NULL){
+      printf("Inserting into empty free list\n");
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), NULL);
       free_listp = bp;
     }else{
+      printf("Inserting into free list with something\n");
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), free_listp);
       PUT_P(free_listp, bp);
       free_listp = bp;
     }
+    print_free_heap();
 	return;
 }
 
 static void rmv_from_free(void *bp)
 {
-
-    if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){ /* check if bp is the first block in list */
+  printf("removing from free list\n");
+  print_free_heap();
+    if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){
+        printf("only thing in free list\n");
         PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NEXT_FREE_BLKP(bp));
     }else if (PREV_FREE_BLKP(bp) == NULL && NEXT_FREE_BLKP(bp) != NULL){
+        printf("first thing in free list\n");
         PUT_P(NEXT_FREE_BLKP(bp), NULL);
         free_listp = NEXT_FREE_BLKP(bp);
     }else if(PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) == NULL){
+        printf("last thing in free list\n");
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NULL);
     }else{
+        printf("only thing in free list\n");
         free_listp = NULL;
     }
+    print_free_heap();
+
     return;
 }
 
@@ -524,6 +536,21 @@ static void print_heap() {
     printf("Heap (%p):\n", heap_start);
 
     for (bp = heap_start; GET_SIZE(HDRP(bp)) > 0; bp = NEXT_BLKP(bp)) {
+        print_block(bp);
+    }
+
+    print_block(bp);
+}
+
+/*
+ * print_heap -- Prints out the current state of the implicit free list
+ */
+static void print_free_heap() {
+    char *bp;
+
+    printf("Heap (%p):\n", free_listp);
+
+    for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
         print_block(bp);
     }
 
