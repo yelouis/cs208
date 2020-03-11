@@ -262,7 +262,7 @@ static void place(void *bp, size_t asize) {
     //printf("top of place\n");
     //print_heap();
 
-  if ((curSize - asize) >= DSIZE) {
+  if ((curSize - asize) >= DSIZE+OVERHEAD) {
         printf("before place, splitting\n");
         print_heap();
         rmv_from_free(bp);
