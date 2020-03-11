@@ -148,8 +148,8 @@ int mm_init(void) {
 
     heap_start = PADD(heap_start, DSIZE); /* start the heap at the (size 0) payload of the prologue block */
 
-     printf("heap in init\n");
-     print_heap();
+     // printf("heap in init\n");
+     // print_heap();
     /* Extend the empty heap with a free block of CHUNKSIZE bytes */
     if (extend_heap(CHUNKSIZE / WSIZE) == NULL)
         return -1;
@@ -210,8 +210,8 @@ void *mm_malloc(size_t size) {
  * Postcondition: Valid bit becomes 0.
  */
 void mm_free(void *bp) {
-    printf("Going to free a block\n");
-    print_heap();
+    // printf("Going to free a block\n");
+    // print_heap();
     char *curHdr = HDRP(bp);
     char *curFtr = FTRP(bp);
 
@@ -226,8 +226,8 @@ void mm_free(void *bp) {
     PUT(curHdr, PACK(blockSize, 0));
     PUT(curFtr, PACK(blockSize, 0));
 
-    printf("Freed a block\n");
-    print_heap();
+    // printf("Freed a block\n");
+    // print_heap();
     coalesce(bp);
 }
 
@@ -434,7 +434,7 @@ static void *find_fit(size_t asize)
 	        return bp;
     }
 
-    printf("Returned NULL\n");
+    printf("Returned NULL in find_fit\n");
 
     return NULL; // No fit
 }
