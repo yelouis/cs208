@@ -124,6 +124,7 @@ static void rmv_from_free(void *bp);
 static void insert_front(void *bp);
 static void place(void *bp, size_t asize);
 static size_t max(size_t x, size_t y);
+static void print_free_heap();
 
 //Currently a version that works up till trace 6
 
