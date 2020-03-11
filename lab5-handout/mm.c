@@ -411,7 +411,7 @@ static void rmv_from_free(void *bp)
     }else if(PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) == NULL){
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NULL);
     }else{
-        free_listp = NULL
+        free_listp = NULL;
     }
     return;
 }
