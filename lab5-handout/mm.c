@@ -414,7 +414,7 @@ static void insert_front(void *bp)
       PUT_P(free_listp, bp);
       free_listp = bp;
     }
-    print_free_heap();
+    // print_free_heap();
 	return;
 }
 
@@ -422,7 +422,7 @@ static void rmv_from_free(void *bp)
 {
   // printf("removing from free list\n");
 
-  print_free_heap();
+  // print_free_heap();
     if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){
         // printf("many things in free list\n");
 
@@ -441,7 +441,7 @@ static void rmv_from_free(void *bp)
         // printf("only thing in free list\n");
         free_listp = NULL;
     }
-    print_free_heap();
+    // print_free_heap();
 
     return;
 }
