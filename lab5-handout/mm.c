@@ -567,7 +567,7 @@ static void print_free_heap() {
         print_block(bp);
     }
 
-    print_block(bp);
+    //print_block(bp);
 }
 
 /*
