@@ -99,8 +99,8 @@ team_t team = {
 #define PREV_BLKP(bp)  (PSUB(bp, GET_SIZE((PSUB(bp, DSIZE)))))
 
 /* Get the next free block given pointer */
-#define PREV_FREE_BLKP(bp)  (*(void *)(GET(bp)))
-#define NEXT_FREE_BLKP(bp)  (*(void *) (GET((PADD(bp, WSIZE)))))
+#define PREV_FREE_BLKP(bp)  (*(void *)(GET_P(bp)))
+#define NEXT_FREE_BLKP(bp)  (*(void *) (GET_P((PADD(bp, WSIZE)))))
 
 #define GET_P(p) (*(void *)(p))
 #define PUT_P(p, val)  (*(void *)(p) = (val))
