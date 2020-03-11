@@ -553,7 +553,12 @@ static void print_free_heap() {
 
     bp = free_listp;
 
-    while(bp != NULL){
+    if(bp == NULL){
+      printf("Empty free list\n");
+      return;
+    }
+
+    while(GET_P(bp) != NULL){
       print_block(bp);
       bp = NEXT_FREE_BLKP(bp);
     }
