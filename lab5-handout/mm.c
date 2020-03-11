@@ -263,8 +263,8 @@ static void place(void *bp, size_t asize) {
     //print_heap();
 
   if ((curSize - asize) >= DSIZE+OVERHEAD) {
-        printf("before place, splitting\n");
-        print_heap();
+        // printf("before place, splitting\n");
+        // print_heap();
         rmv_from_free(bp);
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
@@ -272,18 +272,18 @@ static void place(void *bp, size_t asize) {
         char *nextBp = NEXT_BLKP(bp);
         PUT(HDRP(nextBp), PACK(curSize-asize, 0));
         PUT(FTRP(nextBp), PACK(curSize-asize, 0));
-        printf("after place, splitting\n");
-        print_heap();
+        // printf("after place, splitting\n");
+        // print_heap();
         coalesce(nextBp);
   }
   /* not enough space for free block, don't split */
   else {
-        printf("before place, no splitting\n");
-        print_heap();
+        // printf("before place, no splitting\n");
+        // print_heap();
         PUT(HDRP(bp), PACK(curSize, 1));
         PUT(FTRP(bp), PACK(curSize, 1));
-        printf("after place, no splitting\n");
-        print_heap();
+        // printf("after place, no splitting\n");
+        // print_heap();
         rmv_from_free(bp);
   }
 
@@ -321,13 +321,13 @@ static void place(void *bp, size_t asize) {
  	size_t next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(bp)));
 
  	size_t size = GET_SIZE(HDRP(bp));
-  printf("Before coalesce\n");
-  print_heap();
+  // printf("Before coalesce\n");
+  // print_heap();
 
      /* case 2 */
  	if (prev_alloc && !next_alloc)
  	{
-    printf("Coalesce with next\n");
+    // printf("Coalesce with next\n");
  		size += GET_SIZE(HDRP(NEXT_BLKP(bp)));  /* add size of next free block */
  		rmv_from_free(NEXT_BLKP(bp));           /* remove the block from free list */
  		PUT(HDRP(bp), PACK(size, 0));
@@ -337,7 +337,7 @@ static void place(void *bp, size_t asize) {
      /* case 3 */
  	else if (!prev_alloc && next_alloc)
  	{
-    printf("Coalesce with prev\n");
+    // printf("Coalesce with prev\n");
  	  size += GET_SIZE(HDRP(PREV_BLKP(bp)));    /* add size of previous free block */
  	  bp = PREV_BLKP(bp);
  	  rmv_from_free(bp);                         /* remove the block from free list */
@@ -348,7 +348,7 @@ static void place(void *bp, size_t asize) {
      /* case 4 */
  	else if (!prev_alloc && !next_alloc)
  	{
-    printf("Coalesce with both\n");
+    // printf("Coalesce with both\n");
          /* add size of next and previous free block */
  		size += GET_SIZE(HDRP(PREV_BLKP(bp))) + GET_SIZE(HDRP(NEXT_BLKP(bp)));
  		rmv_from_free(PREV_BLKP(bp));   /* remove the block from free list */
@@ -360,7 +360,7 @@ static void place(void *bp, size_t asize) {
 
      /* if case 1 occurs, it will drop down here without merging with any blocks */
  	insert_front(bp);
-  print_heap();
+  // print_heap();
  	return bp;
 
     // if(prevBlock && nextBlock){
@@ -429,10 +429,12 @@ static void *find_fit(size_t asize)
 
     /* traverse free list */
     for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
-      printf("Looping\n");
+      // printf("Looping\n");
         if (asize <= (size_t)GET_SIZE(HDRP(bp)))
 	        return bp;
     }
+
+    printf("Returned NULL\n");
 
     return NULL; // No fit
 }
