@@ -264,7 +264,7 @@ static void place(void *bp, size_t asize) {
   if ((curSize - asize) >= DSIZE) {
         //printf("before place, splitting\n");
         //print_heap();
-        rmvFromFree(bp);
+        rmv_from_free(bp);
         PUT(HDRP(bp), PACK(asize, 1));
         PUT(FTRP(bp), PACK(asize, 1));
 
@@ -283,7 +283,7 @@ static void place(void *bp, size_t asize) {
         PUT(FTRP(bp), PACK(curSize, 1));
         // printf("after place, no splitting\n");
         // print_heap();
-        rmvFromFree(bp);
+        rmv_from_free(bp);
   }
 
 }
