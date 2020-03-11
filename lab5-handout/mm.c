@@ -555,7 +555,7 @@ static void print_free_heap() {
 
     while(bp != NULL){
       print_block(bp);
-      bp = NEXT_FREE_BLKP(bp)
+      bp = NEXT_FREE_BLKP(bp);
     }
 
     // for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
