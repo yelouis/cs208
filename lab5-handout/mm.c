@@ -551,9 +551,16 @@ static void print_free_heap() {
 
     printf("Heap (%p):\n", free_listp);
 
-    for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
-        print_block(bp);
+    bp = free_listp;
+
+    while(bp != NULL){
+      print_block(bp);
+      bp = NEXT_FREE_BLKP(bp)
     }
+
+    // for (bp = free_listp; bp != NULL; bp = NEXT_FREE_BLKP(bp)) {
+    //     print_block(bp);
+    // }
 
     print_block(bp);
 }
