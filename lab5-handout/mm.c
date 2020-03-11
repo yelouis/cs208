@@ -135,6 +135,7 @@ static void print_free_heap();
  * <Are there any preconditions or postconditions?>
  */
 int mm_init(void) {
+  free_listp = NULL;
     /* create the initial empty heap */
     if ((heap_start = mem_sbrk(4 * WSIZE)) == NULL)
         return -1;
@@ -398,13 +399,16 @@ static void insert_front(void *bp)
 {
   printf("Inserting into free list\n");
   print_free_heap();
+
     if(free_listp == NULL){
       printf("Inserting into empty free list\n");
+
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), NULL);
       free_listp = bp;
     }else{
       printf("Inserting into free list with something\n");
+
       PUT_P(bp, NULL);
       PUT_P(PADD(bp, 8), free_listp);
       PUT_P(free_listp, bp);
@@ -417,17 +421,21 @@ static void insert_front(void *bp)
 static void rmv_from_free(void *bp)
 {
   printf("removing from free list\n");
+
   print_free_heap();
     if (PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) != NULL){
-        printf("only thing in free list\n");
+        printf("many things in free list\n");
+
         PUT_P(NEXT_FREE_BLKP(bp), PREV_FREE_BLKP(bp));
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NEXT_FREE_BLKP(bp));
     }else if (PREV_FREE_BLKP(bp) == NULL && NEXT_FREE_BLKP(bp) != NULL){
         printf("first thing in free list\n");
+
         PUT_P(NEXT_FREE_BLKP(bp), NULL);
         free_listp = NEXT_FREE_BLKP(bp);
     }else if(PREV_FREE_BLKP(bp) != NULL && NEXT_FREE_BLKP(bp) == NULL){
         printf("last thing in free list\n");
+
         PUT_P(PADD(PREV_FREE_BLKP(bp), 8), NULL);
     }else{
         printf("only thing in free list\n");
