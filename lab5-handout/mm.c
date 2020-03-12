@@ -74,9 +74,6 @@ team_t team = {
  * carefully about why these work the way they do
  */
 
-#define ALIGN(p) (((size_t)(p) + (32-1)) & ~0x7)
-
-
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
 
@@ -244,42 +241,86 @@ void mm_free(void *bp) {
  * <Are there any preconditions or postconditions?>
 */
 void *mm_realloc(void *ptr, size_t size) {
-  size_t oldsize, asize;
-  void *newptr;
+  // If ptr is NULL, realloc is equivalent to mm_malloc(size)
+  if (ptr == NULL)
+    return mm_malloc(size);
 
-  asize = max(ALIGN(size) + DSIZE, 32);
-  /* If size == 0 then this is just free, and we return NULL. */
-  if(size == 0) {
-      free(ptr);
-      return 0;
+  // If size is equal to zero, realloc is equivalent to mm_free(ptr)
+  if (size == 0) {
+    mm_free(ptr);
+    return NULL;
   }
 
-  /* If oldptr is NULL, then this is just malloc. */
-  if(ptr == NULL) {
-      return malloc(size);
+  /* Otherwise, we assume ptr is not NULL and was returned by an earlier malloc or realloc call.
+   * Get the size of the current payload */
+
+  size_t asize;
+
+  /* Adjust block size to include overhead and alignment reqs. */
+  if (size <= DSIZE) {
+      asize = DSIZE + OVERHEAD;
+  } else {
+      /* Add overhead and then round up to nearest multiple of double-word alignment */
+      asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
   }
 
-  /* Original block size */
-  oldsize = GET_SIZE(HDRP(ptr));
+  asize = max(asize + DSIZE, 32)
+  size_t current_size = GET_SIZE(HDRP(ptr));
 
-  /* If new size is same as old, just return */
-  if (asize == oldsize)  return ptr;
+  void *bp;
+  char *next = HDRP(NEXT_BLKP(ptr));
+  size_t newsize = current_size + GET_SIZE(next);
 
-  newptr = mm_malloc(size);
+  /* Case 1: Size is equal to the current payload size */
+  if (asize == current_size)
+    return ptr;
 
-  /* If realloc() fails the original block is left untouched  */
-  if(!newptr) {
-      return 0;
+  // Case 2: Size is less than the current payload size
+  if ( asize <= current_size ) {
+
+    if( asize > MINBLOCKSIZE && (current_size - asize) > MINBLOCKSIZE) {
+
+      PUT(HDRP(ptr), PACK(asize, 1));
+      PUT(FTRP(ptr), PACK(asize, 1));
+      bp = NEXT_BLKP(ptr);
+      PUT(HDRP(bp), PACK(current_size - asize, 1));
+      PUT(FTRP(bp), PACK(current_size - asize, 1));
+      mm_free(bp);
+      return ptr;
+    }
+
+    // allocate a new block of the requested size and release the current block
+    bp = mm_malloc(asize);
+    memcpy(bp, ptr, asize);
+    mm_free(ptr);
+    return bp;
   }
 
-  /* Copy the old data. */
-  if(size < oldsize) oldsize = size;
-  memcpy(newptr, ptr, oldsize);
+  // Case 3: Requested size is greater than the current payload size
+  else {
 
-  /* Free the old block. */
-  free(ptr);
+    // next block is unallocated and is large enough to complete the request
+    // merge current block with next block up to the size needed and free the
+    // remaining block.
+    if ( !GET_ALLOC(next) && newsize >= asize ) {
 
-  return newptr;
+      // merge, split, and release
+      rmv_from_free(NEXT_BLKP(ptr));
+      PUT(HDRP(ptr), PACK(asize, 1));
+      PUT(FTRP(ptr), PACK(asize, 1));
+      bp = NEXT_BLKP(ptr);
+      PUT(HDRP(bp), PACK(newsize-asize, 1));
+      PUT(FTRP(bp), PACK(newsize-asize, 1));
+      mm_free(bp);
+      return ptr;
+    }
+
+    // otherwise allocate a new block of the requested size and release the current block
+    bp = mm_malloc(asize);
+    memcpy(bp, ptr, current_size);
+    mm_free(ptr);
+    return bp;
+  }
 }
 
 
