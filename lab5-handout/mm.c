@@ -245,7 +245,8 @@ void mm_free(void *bp) {
  * <Are there any preconditions or postconditions?>
 */
 void *mm_realloc(void *ptr, size_t size) {
-  size_t oldsize,newsize;
+  size_t oldsize;
+  size_t newsize;
 	void *newptr;
 
 	//If size is negative it means nothing, just return NULL
@@ -271,25 +272,11 @@ void *mm_realloc(void *ptr, size_t size) {
 	if (newsize <= oldsize){
 
 	   /*
-		* AS MENTIONED IN THE PROJECT HANDOUT THE CODE SNIPPET BELOW SHRINKS THE OLD ALLOCATED BLOCK
-		* SIZE TO THE REQUESTED NEW SIZE BY REMOVING EXTRA DATA i.e. (oldsize-newsize) AMOUNT OF DATA.
-		* ON RUNNING CODE WITH THIS SNIPPET, THE FOLLOWING ERROR OCCURS 'mm_realloc did not preserve
-		* the data from old block' WHICH WILL ALWAYS HAPPEN IF WE SHRINK THE BLOCK.
+		* Shrinks block so cannot preserve data. Just return pointer
 		*/
 
-		/*if(oldsize-newsize<=2*DSIZE){
-			return ptr;
-		}
-		PUT(HDRP(ptr),PACK(newsize,1));
-		PUT(FTRP(ptr),PACK(newsize,1));
-		PUT(HDRP(NEXT_BLKP(ptr)),PACK(oldsize-newsize,1));
-		PUT(FTRP((NEXT_BLKP(ptr)),PACK(oldsize-newsize,1));
-		mm_free(NEXT_BLKP(ptr));
-		free_list_add(NEXT_BLKP(ptr));*/
-
 		return ptr;
-	}
-	else{
+	}else{
 		size_t if_next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));		//check if next block is allocated
 		size_t next_blk_size = GET_SIZE(HDRP(NEXT_BLKP(ptr)));		//size of next block
 		size_t total_free_size = oldsize + next_blk_size;			//total free size of current and next block
