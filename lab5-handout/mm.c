@@ -77,6 +77,10 @@ team_t team = {
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
 
+#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
+#define ALIGNMENT 8
+
+
 /* Read and write a word at address p */
 #define GET(p)       (*(size_t *)(p))
 #define PUT(p, val)  (*(size_t *)(p) = (val))
@@ -241,86 +245,84 @@ void mm_free(void *bp) {
  * <Are there any preconditions or postconditions?>
 */
 void *mm_realloc(void *ptr, size_t size) {
-  // If ptr is NULL, realloc is equivalent to mm_malloc(size)
-  if (ptr == NULL)
-    return mm_malloc(size);
+  void *oldptr = ptr;
+  void *newptr;
+  void * nextptr;
+  size_t copySize, asize, nsize;
 
-  // If size is equal to zero, realloc is equivalent to mm_free(ptr)
+  /*if size = 0, we want to free ptr*/
   if (size == 0) {
-    mm_free(ptr);
+    mm_free(oldptr);
     return NULL;
   }
 
-  /* Otherwise, we assume ptr is not NULL and was returned by an earlier malloc or realloc call.
-   * Get the size of the current payload */
+  /*if oldptr is null, we want to call malloc(size) */
+  if (oldptr == NULL) {
+    return mm_malloc(size);
+  }
+  asize = ALIGN(size);
 
-  size_t asize;
+  /*realloc ptr with size*/
+ copySize =GET_SIZE(HDRP(oldptr))-DSIZE;
 
-  /* Adjust block size to include overhead and alignment reqs. */
-  if (size <= DSIZE) {
-      asize = DSIZE + OVERHEAD;
-  } else {
-      /* Add overhead and then round up to nearest multiple of double-word alignment */
-      asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
+  if (asize == copySize) {
+    return oldptr;
   }
 
-  asize = max(asize + DSIZE, 32);
-  size_t current_size = GET_SIZE(HDRP(ptr));
+  /*Case 1: */
+  /*if size < oldptr size, the oldptr can hold the new size*/
+  if (asize < copySize) {
+    //if the remaining space is not enough to store anything, return oldptr
+    if (copySize - asize - DSIZE <= DSIZE) return oldptr;
+    PUT(HDRP(oldptr), PACK(asize + DSIZE, 1));
+    PUT(FTRP(oldptr), PACK(asize + DSIZE, 1));
+    newptr = oldptr;
+    oldptr = NEXT_BLKP(newptr);
+    /*free the space emptied*/
+    PUT(HDRP(oldptr), PACK(copySize - asize, 0));
+    PUT(FTRP(oldptr), PACK(copySize - asize, 0));
+    insert_free_block(oldptr, GET_SIZE(HDRP(oldptr)));
+    coalesce(oldptr);
+    return newptr;
+  }
 
-  void *bp;
-  char *next = HDRP(NEXT_BLKP(ptr));
-  size_t newsize = current_size + GET_SIZE(next);
-
-  /* Case 1: Size is equal to the current payload size */
-  if (asize == current_size)
-    return ptr;
-
-  // Case 2: Size is less than the current payload size
-  if ( asize <= current_size ) {
-
-    if( asize > 32 && (current_size - asize) > 32) {
-
-      PUT(HDRP(ptr), PACK(asize, 1));
-      PUT(FTRP(ptr), PACK(asize, 1));
-      bp = NEXT_BLKP(ptr);
-      PUT(HDRP(bp), PACK(current_size - asize, 1));
-      PUT(FTRP(bp), PACK(current_size - asize, 1));
-      mm_free(bp);
-      return ptr;
+  /*Case 2: */
+  /*if size > oldptr size, we need to either find a new block, or take the space of next blk*/
+  nextptr = NEXT_BLKP(oldptr);
+  /*now check if the next block after oldptr block, in-place, is free*/
+  if (nextptr != NULL && !GET_ALLOC(HDRP(nextptr))) {
+    nsize = GET_SIZE(HDRP(nextptr));
+    if (nsize + copySize >= asize) {
+      remove_free_block(nextptr);
+      if(nsize + copySize - asize <= DSIZE) {
+        //if remaining space in next block cannot hold any value, just use it all
+        PUT(HDRP(oldptr), PACK(copySize + DSIZE + nsize, 1));
+        PUT(FTRP(oldptr), PACK(copySize + DSIZE + nsize, 1));
+        return oldptr;
+      }else{    //coalecse the reamming free sapce after
+        PUT(HDRP(oldptr), PACK(asize + DSIZE, 1));
+        PUT(FTRP(oldptr), PACK(asize + DSIZE, 1));
+        newptr = oldptr;
+        oldptr = NEXT_BLKP(newptr);
+        PUT(HDRP(oldptr), PACK(copySize + nsize - asize, 0));
+        PUT(FTRP(oldptr), PACK(copySize + nsize - asize, 0));
+        insert_free_block(oldptr, GET_SIZE(HDRP(oldptr)));
+        coalesce(oldptr);
+        return newptr;
+      }
     }
-
-    // allocate a new block of the requested size and release the current block
-    bp = mm_malloc(asize);
-    memcpy(bp, ptr, asize);
-    mm_free(ptr);
-    return bp;
   }
 
-  // Case 3: Requested size is greater than the current payload size
-  else {
+  /*Case 3: */
+  /*now we have our last option, which is to allocate a completely new block to fit the size*/
+  newptr = mm_malloc(size);
+  if (newptr == NULL)
+    return NULL;
+  /*copy over the data from oldptr*/
+  memcpy(newptr, oldptr, copySize);
+  mm_free(oldptr);
+  return newptr;
 
-    // next block is unallocated and is large enough to complete the request
-    // merge current block with next block up to the size needed and free the
-    // remaining block.
-    if ( !GET_ALLOC(next) && newsize >= asize ) {
-
-      // merge, split, and release
-      rmv_from_free(NEXT_BLKP(ptr));
-      PUT(HDRP(ptr), PACK(asize, 1));
-      PUT(FTRP(ptr), PACK(asize, 1));
-      bp = NEXT_BLKP(ptr);
-      PUT(HDRP(bp), PACK(newsize-asize, 1));
-      PUT(FTRP(bp), PACK(newsize-asize, 1));
-      mm_free(bp);
-      return ptr;
-    }
-
-    // otherwise allocate a new block of the requested size and release the current block
-    bp = mm_malloc(asize);
-    memcpy(bp, ptr, current_size);
-    mm_free(ptr);
-    return bp;
-  }
 }
 
 
