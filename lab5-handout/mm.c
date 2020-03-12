@@ -1,27 +1,25 @@
-/*
- * Simple allocator based on implicit free lists, first fit search,
- * and boundary tag coalescing.
- *
- * Each block has header and footer of the form:
- *
- *      64                  4  3  2  1  0
- *      -----------------------------------
- *     | s  s  s  s  ... s  s  0  0  0  a/f
- *      -----------------------------------
- *
- * where s are the meaningful size bits and a/f is 1
- * if and only if the block is allocated. The list has the following form:
- *
- * begin                                                             end
- * heap                                                             heap
- *  -----------------------------------------------------------------
- * |  pad   | hdr(16:a) | ftr(16:a) | zero or more usr blks | hdr(0:a) |
- *  -----------------------------------------------------------------
- *          |       prologue        |                       | epilogue |
- *          |         block         |                       | block    |
- *
- * The allocated prologue and epilogue blocks are overhead that
- * eliminate edge conditions during coalescing.
+/*  EMPTY BLOCK
+ *  -----------------------------------------------*
+ *  |HEADER:    block size               |alloc bit|
+ *  |----------------------------------------------|
+ *  | pointer to prev free block in free_listp     |
+ *  |----------------------------------------------|
+ *  | pointer to next free block in free_listp     |
+ *  |----------------------------------------------|
+ *  |FOOTER:    block size               |alloc bit|
+ *  ------------------------------------------------
+ */
+
+/*  Allocated BLOCK
+ *   -----------------------------------------------*
+ *   |HEADER:    block size               |alloc bit|
+ *   |----------------------------------------------|
+ *   |               Data                           |
+ *   |----------------------------------------------|
+ *   |               Data                           |
+ *   |----------------------------------------------|
+ *   |FOOTER:    block size               |alloc bit|
+ *   ------------------------------------------------
  */
 
 
@@ -66,7 +64,6 @@ team_t team = {
 #define DSIZE       16      /* doubleword size (bytes) */
 #define CHUNKSIZE  (1<<12)  /* initial heap size (bytes) */
 #define OVERHEAD    16      /* overhead of header and footer (bytes) */
-#define OVERHEADEX  32      /* overhead of header and footer (bytes) of explicit */
 
 
 /* NOTE: feel free to replace these macros with helper functions and/or
@@ -133,10 +130,7 @@ static void print_free_heap();
 //Currently a version that works up till trace 6
 
 /*
- * mm_init -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ * mm_init -- Initializes malloc and free_listp
  */
 int mm_init(void) {
   free_listp = NULL;
@@ -167,10 +161,7 @@ int mm_init(void) {
 }
 
 /*
- * mm_malloc -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ * mm_malloc -- Allocate a block
  */
 void *mm_malloc(size_t size) {
     size_t asize;      /* adjusted block size */
@@ -239,10 +230,7 @@ void mm_free(void *bp) {
 
 /*
  * EXTRA CREDIT
- * mm_realloc -- <What does this function do?>
- * <What are the function's arguments?>
- * <What is the function's return value?>
- * <Are there any preconditions or postconditions?>
+ * mm_realloc -- realloc a block given pointer and size
 */
 void *mm_realloc(void *ptr, size_t size) {
   size_t oldsize;
@@ -453,7 +441,9 @@ static void place(void *bp, size_t asize) {
     // }
 
 }
-
+/*
+ * insert_front -- insert free block at front of free_listp
+ */
 static void insert_front(void *bp)
 {
   // printf("Inserting into free list\n");
@@ -476,7 +466,9 @@ static void insert_front(void *bp)
     // print_free_heap();
 	return;
 }
-
+/*
+ * rmv_from_free -- removes free block from free_listp
+ */
 static void rmv_from_free(void *bp)
 {
   // printf("removing from free list\n");
@@ -505,6 +497,9 @@ static void rmv_from_free(void *bp)
     return;
 }
 
+/*
+ * find_fit - Find a fit for a block with asize bytes
+ */
 static void *find_fit(size_t asize)
 {
     void *bp;
