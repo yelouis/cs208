@@ -241,10 +241,8 @@ void mm_free(void *bp) {
  * <Are there any preconditions or postconditions?>
 */
 void *mm_realloc(void *ptr, size_t size) {
-  void *oldptr = ptr;
+  size_t oldsize, asize;
   void *newptr;
-  size_t copySize;
-  size_t asize;
 
   if (size <= DSIZE) {
       asize = DSIZE + OVERHEAD;
@@ -253,14 +251,38 @@ void *mm_realloc(void *ptr, size_t size) {
       asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
   }
 
+  asize = max(asize, MINIMUM);
+  /* If size == 0 then this is just free, and we return NULL. */
+  if(size == 0) {
+      free(ptr);
+      return 0;
+  }
+
+  /* If oldptr is NULL, then this is just malloc. */
+  if(ptr == NULL) {
+      return malloc(size);
+  }
+
+  /* Original block size */
+  oldsize = GET_SIZE(HDRP(ptr));
+
+  /* If new size is same as old, just return */
+  if (asize == oldsize)  return ptr;
+
   newptr = mm_malloc(size);
-  if (newptr == NULL)
-    return NULL;
-  copySize = *(size_t *)((char *)oldptr - asize);
-  if (size < copySize)
-    copySize = size;
-  memcpy(newptr, oldptr, copySize);
-  mm_free(oldptr);
+
+  /* If realloc() fails the original block is left untouched  */
+  if(!newptr) {
+      return 0;
+  }
+
+  /* Copy the old data. */
+  if(size < oldsize) oldsize = size;
+  memcpy(newptr, ptr, oldsize);
+
+  /* Free the old block. */
+  free(ptr);
+
   return newptr;
 }
 
