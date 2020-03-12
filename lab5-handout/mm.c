@@ -74,7 +74,7 @@ team_t team = {
  * carefully about why these work the way they do
  */
 
-#define ALIGN(p) (((size_t)(p) + (8-1)) & ~0x7)
+#define ALIGN(p) (((size_t)(p) + (16-1)) & ~0x7)
 
 
 /* Pack a size and allocated bit into a word */
