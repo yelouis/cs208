@@ -251,7 +251,7 @@ void *mm_realloc(void *ptr, size_t size) {
       asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
   }
 
-  asize = max(asize, MINIMUM);
+  asize = max(asize, 32);
   /* If size == 0 then this is just free, and we return NULL. */
   if(size == 0) {
       free(ptr);
