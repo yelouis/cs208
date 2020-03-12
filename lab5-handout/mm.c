@@ -264,7 +264,7 @@ void *mm_realloc(void *ptr, size_t size) {
       asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
   }
 
-  asize = max(asize + DSIZE, 16);
+  asize = max(asize + DSIZE, 32);
   size_t current_size = GET_SIZE(HDRP(ptr));
 
   void *bp;
@@ -278,7 +278,7 @@ void *mm_realloc(void *ptr, size_t size) {
   // Case 2: Size is less than the current payload size
   if ( asize <= current_size ) {
 
-    if( asize > 16 && (current_size - asize) > 16) {
+    if( asize > 32 && (current_size - asize) > 32) {
 
       PUT(HDRP(ptr), PACK(asize, 1));
       PUT(FTRP(ptr), PACK(asize, 1));
