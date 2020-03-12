@@ -277,15 +277,15 @@ void *mm_realloc(void *ptr, size_t size) {
 
 		return ptr;
 	}else{
-		size_t if_next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));		//check if next block is allocated
-		size_t next_blk_size = GET_SIZE(HDRP(NEXT_BLKP(ptr)));		//size of next block
-		size_t total_free_size = oldsize + next_blk_size;			//total free size of current and next block
+		size_t ifNextAlloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));		//check if next block is allocated
+		size_t nextBlkSize = GET_SIZE(HDRP(NEXT_BLKP(ptr)));		//size of next block
+		size_t totalFreeSize = oldsize + nextBlkSize;			//total free size of current and next block
 
-		//combining current and next block if total_free_size is greater then or equal to new size
-		if(!if_next_alloc && total_free_size>= newsize){
+		//combining current and next block if totalFreeSize is greater then or equal to new size
+		if(!ifNextAlloc && totalFreeSize>= newsize){
 			rmv_from_free(NEXT_BLKP(ptr));
-			PUT(HDRP(ptr),PACK(total_free_size,1));
-			PUT(FTRP(ptr),PACK(total_free_size,1));
+			PUT(HDRP(ptr),PACK(totalFreeSize,1));
+			PUT(FTRP(ptr),PACK(totalFreeSize,1));
 			return ptr;
 		}
 		//finding new size elsewhere in free_list and copy old data to new place
