@@ -264,7 +264,7 @@ void *mm_realloc(void *ptr, size_t size) {
       asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
   }
 
-  asize = max(asize + DSIZE, 32)
+  asize = max(asize + DSIZE, 32);
   size_t current_size = GET_SIZE(HDRP(ptr));
 
   void *bp;
