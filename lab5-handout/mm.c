@@ -245,7 +245,76 @@ void mm_free(void *bp) {
  * <Are there any preconditions or postconditions?>
 */
 void *mm_realloc(void *ptr, size_t size) {
+  size_t oldsize,newsize;
+	void *newptr;
 
+	//If size is negative it means nothing, just return NULL
+	if((int)size < 0)
+    	return NULL;
+
+	/* If size == 0 then this is just free, and we return NULL. */
+	if (size == 0) {
+		mm_free(ptr);
+		return (NULL);
+	}
+
+	/* If oldptr is NULL, then this is just malloc. */
+	if (ptr == NULL)
+		return (mm_malloc(size));
+
+	oldsize=GET_SIZE(HDRP(ptr));
+	newsize = size + (2 * WSIZE);					// newsize after adding header and footer to asked size
+
+	/* Copy the old data. */
+
+	//If the size needs to be decreased, shrink the block and return the same pointer
+	if (newsize <= oldsize){
+
+	   /*
+		* AS MENTIONED IN THE PROJECT HANDOUT THE CODE SNIPPET BELOW SHRINKS THE OLD ALLOCATED BLOCK
+		* SIZE TO THE REQUESTED NEW SIZE BY REMOVING EXTRA DATA i.e. (oldsize-newsize) AMOUNT OF DATA.
+		* ON RUNNING CODE WITH THIS SNIPPET, THE FOLLOWING ERROR OCCURS 'mm_realloc did not preserve
+		* the data from old block' WHICH WILL ALWAYS HAPPEN IF WE SHRINK THE BLOCK.
+		*/
+
+		/*if(oldsize-newsize<=2*DSIZE){
+			return ptr;
+		}
+		PUT(HDRP(ptr),PACK(newsize,1));
+		PUT(FTRP(ptr),PACK(newsize,1));
+		PUT(HDRP(NEXT_BLKP(ptr)),PACK(oldsize-newsize,1));
+		PUT(FTRP((NEXT_BLKP(ptr)),PACK(oldsize-newsize,1));
+		mm_free(NEXT_BLKP(ptr));
+		free_list_add(NEXT_BLKP(ptr));*/
+
+		return ptr;
+	}
+	else{
+		size_t if_next_alloc = GET_ALLOC(HDRP(NEXT_BLKP(ptr)));		//check if next block is allocated
+		size_t next_blk_size = GET_SIZE(HDRP(NEXT_BLKP(ptr)));		//size of next block
+		size_t total_free_size = oldsize + next_blk_size;			//total free size of current and next block
+
+		//combining current and next block if total_free_size is greater then or equal to new size
+		if(!if_next_alloc && total_free_size>= newsize){
+			rmv_from_free(NEXT_BLKP(ptr));
+			PUT(HDRP(ptr),PACK(total_free_size,1));
+			PUT(FTRP(ptr),PACK(total_free_size,1));
+			return ptr;
+		}
+		//finding new size elsewhere in free_list and copy old data to new place
+		else{
+			newptr=mm_malloc(newsize);
+
+			/* If realloc() fails the original block is left untouched  */
+			if (newptr == NULL)
+				return (NULL);
+
+			place(newptr,newsize);
+			memcpy(newptr,ptr,oldsize);
+			mm_free(ptr);
+			return newptr;
+		}
+	}
 }
 
 
