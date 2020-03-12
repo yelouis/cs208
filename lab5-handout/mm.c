@@ -281,7 +281,7 @@ void *mm_realloc(void *ptr, size_t size) {
     /*free the space emptied*/
     PUT(HDRP(oldptr), PACK(copySize - asize, 0));
     PUT(FTRP(oldptr), PACK(copySize - asize, 0));
-    insert_free_block(oldptr, GET_SIZE(HDRP(oldptr)));
+    insert_front(oldptr, GET_SIZE(HDRP(oldptr)));
     coalesce(oldptr);
     return newptr;
   }
@@ -293,7 +293,7 @@ void *mm_realloc(void *ptr, size_t size) {
   if (nextptr != NULL && !GET_ALLOC(HDRP(nextptr))) {
     nsize = GET_SIZE(HDRP(nextptr));
     if (nsize + copySize >= asize) {
-      remove_free_block(nextptr);
+      rmv_from_free(nextptr);
       if(nsize + copySize - asize <= DSIZE) {
         //if remaining space in next block cannot hold any value, just use it all
         PUT(HDRP(oldptr), PACK(copySize + DSIZE + nsize, 1));
@@ -306,7 +306,7 @@ void *mm_realloc(void *ptr, size_t size) {
         oldptr = NEXT_BLKP(newptr);
         PUT(HDRP(oldptr), PACK(copySize + nsize - asize, 0));
         PUT(FTRP(oldptr), PACK(copySize + nsize - asize, 0));
-        insert_free_block(oldptr, GET_SIZE(HDRP(oldptr)));
+        insert_front(oldptr, GET_SIZE(HDRP(oldptr)));
         coalesce(oldptr);
         return newptr;
       }
