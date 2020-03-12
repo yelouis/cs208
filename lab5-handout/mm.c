@@ -74,6 +74,9 @@ team_t team = {
  * carefully about why these work the way they do
  */
 
+#define ALIGN(p) (((size_t)(p) + (8-1)) & ~0x7)
+
+
 /* Pack a size and allocated bit into a word */
 #define PACK(size, alloc)  ((size) | (alloc))
 
@@ -244,14 +247,7 @@ void *mm_realloc(void *ptr, size_t size) {
   size_t oldsize, asize;
   void *newptr;
 
-  if (size <= DSIZE) {
-      asize = DSIZE + OVERHEAD;
-  } else {
-      /* Add overhead and then round up to nearest multiple of double-word alignment */
-      asize = DSIZE * ((size + (OVERHEAD) + (DSIZE - 1)) / DSIZE);
-  }
-
-  asize = max(asize, 32);
+  asize = max(ALIGN(size) + DSIZE, 32);
   /* If size == 0 then this is just free, and we return NULL. */
   if(size == 0) {
       free(ptr);
